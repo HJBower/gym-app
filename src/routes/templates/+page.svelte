@@ -108,4 +108,5 @@
 	button:hover {
 		background-image: radial-gradient(circle, var(--button-color-hover) 0%, var(--button-color-default) 20%, white 100%);
 	}
+	
 </style>

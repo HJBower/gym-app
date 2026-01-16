@@ -5,10 +5,13 @@
 	import { EXERCISE_CONTEXT }  from "$lib/contexts/exercise";
 	import { NUM_REQUESTED, WEBSITE_URL, WEEKDAYS } from "$lib/constants";
     import { workoutTemplates } from "$lib/templates.svelte";
-    import WorkoutTemplate from "./templates/WorkoutTemplate.svelte";
 
 	let templateModal = $state(false);
 	let description = $state("");
+
+	let focus = $state(false);
+
+	let searchTerm = $state("");
 
 	let workouts: WorkoutType[] = $state([]);
 	let exerciseNames: string[] = $state([]);
@@ -161,6 +164,20 @@
 		return name.concat(" - ", descrip);
 	} 
 
+	function filterExercises() {
+		let filtered: string[] = [];
+
+		for (const workout of workouts) {
+			for (const exercise of workout.exercises) {
+				if (exercise.name.toUpperCase().startsWith(searchTerm.toUpperCase())) {
+					filtered.push(exercise.name);
+				}
+			}
+		}
+
+		return filtered;
+	}
+
 
 </script>
 
@@ -173,12 +190,20 @@
 
 	<!-- Add a workout: either Default of from Templates -->
 	<div class="workout-addition">
-		<div>
+		<div >
 			<button class="left" onclick={addWorkout}>Default</button>
 			<div class="addition"><span class="material-symbols--add-circle-outline-rounded"></span></div>
 			<button class="right" onclick={() => templateModal = true}>Template</button>
 		</div>
     </div>
+
+	<!-- Search bar for exercises -->
+	<div class="search-bar">
+		<div data-focus={focus}>
+			<span class="material-symbols--search-rounded" ></span>
+			<input bind:value={searchTerm} placeholder="Search..." onfocus={() => focus = true} onblur={() => focus = false}>
+		</div>
+	</div>
 
 	<!-- Modal for Templates -->
 	<Modal title="Add template workout" form bind:open={templateModal}>
@@ -192,15 +217,24 @@
 		</ul>
 	</Modal>
 
-
-	<!-- List of workouts -->
-	<ul>
-		{#each workouts as _, i}
-			<li class="p-4">
-				<Workout bind:workout={workouts[workouts.length - 1 - i]}/>
-			</li>
-		{/each}
-	</ul>
+	{#if searchTerm === ""}
+		<!-- List of workouts -->
+		<ul>
+			{#each workouts as _, i}
+				<li class="p-4">
+					<Workout bind:workout={workouts[workouts.length - 1 - i]}/>
+				</li>
+			{/each}
+		</ul>
+	{:else}
+		<ul>
+			{#each filterExercises() as name}
+				<li>
+					{name}
+				</li>	
+			{/each}
+		</ul>
+	{/if}
 
 	
 
@@ -214,6 +248,49 @@
 </div>
 
 <style>
+
+	.search-bar {
+		display: flex;
+		justify-content: center;
+		padding: 0.5rem;
+	}
+
+	.search-bar input {
+		width: 80%;
+		border-style: none;
+		text-overflow: ellipsis;
+	}
+
+	.search-bar input:focus {
+		outline: none;
+	}
+
+	.search-bar input::placeholder {
+		color: rgb(255, 255, 255);
+	}
+
+	.search-bar > div {
+		display: flex;
+		justify-content: space-evenly;
+		align-items: center;
+
+		border-radius: var(--border-radius);
+		border-color: var(--border-color);
+		background-color: var(--bg-color-primary);
+
+		padding-inline: 0.2rem;
+		padding-block: 0.3rem;
+		
+		width: 25%;
+	}
+
+	.search-bar > div:hover {
+		background-color: var(--bg-color-secondary);
+	}
+
+	.search-bar > div[data-focus="true"] {
+		background-color: var(--bg-color-secondary);
+	}
 
 	p {
 		height: 1.5rem; /* should be text height */
@@ -328,5 +405,21 @@
         -webkit-mask-size: 100% 100%;
         mask-size: 100% 100%;
     }
+
+	.material-symbols--search-rounded {
+
+		width: 1rem;
+		height: 1rem;
+
+		--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l5.6 5.6q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-5.6-5.6q-.75.6-1.725.95T9.5 16m0-2q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14'/%3E%3C/svg%3E");
+
+		background-color: black;
+		-webkit-mask-image: var(--svg);
+		mask-image: var(--svg);
+		-webkit-mask-repeat: no-repeat;
+		mask-repeat: no-repeat;
+		-webkit-mask-size: 100% 100%;
+		mask-size: 100% 100%;
+	}
 
 </style>
