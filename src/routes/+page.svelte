@@ -5,13 +5,13 @@
 	import { EXERCISE_CONTEXT }  from "$lib/contexts/exercise";
 	import { NUM_REQUESTED, WEBSITE_URL, WEEKDAYS } from "$lib/constants";
     import { workoutTemplates } from "$lib/templates.svelte";
+    import WorkoutTemplate from "./templates/WorkoutTemplate.svelte";
 
-	let defaultModal = $state(false);
 	let templateModal = $state(false);
+	let description = $state("");
 
 	let workouts: WorkoutType[] = $state([]);
 	let exerciseNames: string[] = $state([]);
-	// let templates: WorkoutTemplate[] = workoutTemplates; // Only want to read newest templates
 
 	setContext(EXERCISE_CONTEXT, {
 		exerciseNames,
@@ -149,6 +149,18 @@
 		}
 	}
 
+	function createDescription(template: WorkoutTemplateType) {
+		let name = template.name;
+
+		let descrip: string = "";
+		for (const exercise of template.exercises) {
+			descrip = descrip.concat(exercise.name + ": " + exercise.sets.toString(), ", ");
+		}
+		descrip = descrip.slice(0, descrip.length - 2)
+
+		return name.concat(" - ", descrip);
+	} 
+
 
 </script>
 
@@ -159,6 +171,7 @@
 
 <div>
 
+	<!-- Add a workout: either Default of from Templates -->
 	<div class="workout-addition">
 		<div>
 			<button class="left" onclick={addWorkout}>Default</button>
@@ -167,6 +180,20 @@
 		</div>
     </div>
 
+	<!-- Modal for Templates -->
+	<Modal title="Add template workout" form bind:open={templateModal}>
+		<p>{description}</p>
+		<ul class="templates">
+			{#each workoutTemplates as template}
+				<li class="m-2">
+					<button onclick={() => addTemplateWorkout(template.name)} onmouseenter={() => description = createDescription(template)}>{template.name}</button>
+				</li>
+			{/each}
+		</ul>
+	</Modal>
+
+
+	<!-- List of workouts -->
 	<ul>
 		{#each workouts as _, i}
 			<li class="p-4">
@@ -175,21 +202,7 @@
 		{/each}
 	</ul>
 
-	<Modal title="Add template workout" form bind:open={templateModal}>
-		<ul>
-			{#each workoutTemplates as template}
-				<li class="m-2">
-					<button class="bg-sky-500 hover:bg-sky-700 rounded-2xl text-black" onclick={() => addTemplateWorkout(template.name)}>{template.name}</button>
-				</li>
-			{/each}
-		</ul>
-	</Modal>
-
-
-	<Modal title="Add workout" form bind:open={defaultModal}>
-        <p>Select new exercise type.</p>
-        <p>Delete this exercise.</p>
-    </Modal>
+	
 
 	<p>{JSON.stringify(workouts, null, 2)}</p>
 	<p>{exerciseNames}</p>
@@ -201,6 +214,46 @@
 </div>
 
 <style>
+
+	p {
+		height: 1.5rem; /* should be text height */
+		overflow-x: hidden;
+		overflow-y: hidden;
+	}
+
+	.templates {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex-wrap: nowrap;
+		overflow-y: auto;
+		height: 12rem;
+	}
+
+	.templates > li {
+		display: flex;
+		justify-content: center;
+		width: 25%;
+	}
+
+	.templates button {
+		background-color: var(--button-color-default);
+		border-radius: var(--border-radius);
+		color: black;
+		width: 100%;
+
+		padding-inline: 1em;
+		text-overflow: ellipsis;
+
+		overflow-y: hidden;
+		overflow-x: hidden;
+		min-height: auto;
+		max-height: 3rem;
+	}
+
+	.templates button:hover {
+		background-color: var(--button-color-hover);
+	}
 
 	.data {
 		position: fixed;

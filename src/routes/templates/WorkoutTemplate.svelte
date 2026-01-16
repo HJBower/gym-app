@@ -52,7 +52,7 @@
     <Accordion inactiveClass="border-gray-300 bg-sky-600" activeClass="border-gray-300 bg-sky-400">
     <AccordionItem>
         {#snippet header()}
-           <input class="input-template" value={template.name} placeholder="Enter template name..." />
+           <input class="input-template" bind:value={template.name} placeholder="Enter template name..." />
         {/snippet}
         {#snippet arrowup()}<Up width=1.25rem height=1.25rem/>{/snippet}
         {#snippet arrowdown()}<Down width=1.25rem height=1.25rem/>{/snippet}

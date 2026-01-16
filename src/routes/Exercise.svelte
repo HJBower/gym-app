@@ -108,6 +108,7 @@
             <span class="material-symbols--keyboard-double-arrow-left-rounded"></span>
         </button>
 
+        <!-- List with sets -->
         <ul bind:this={setList}>
             {#each Array.from({length: exercise.reps.length}) as _, i}
                 <li >

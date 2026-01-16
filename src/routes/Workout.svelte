@@ -26,7 +26,14 @@
     <AccordionItem>
         {#snippet header()}
             <div class="accordion-header">
-                <input type="text" bind:value={workout.name} data-edit={edit} onfocus={() => (edit = true)} onblur={() => (edit = false)}/>
+                <input type="text" 
+                    bind:value={workout.name} 
+                    data-edit={edit} 
+                    onfocus={() => (edit = true)} 
+                    onblur={() => (edit = false)}
+                    onclick={(e) => (e.stopPropagation())}
+                    onkeydown={(e) => (e.stopPropagation())}
+                />
                 <div class="text-sm">{workout.date}</div>
             </div>    
         {/snippet}
@@ -56,10 +63,12 @@
 <style>
 
     input {
-        font-weight: bold;
         padding: 0;
         border-style: none;
         background-color: rgba(0, 0, 0, 0);
+
+        font-weight: bold;
+        text-overflow: ellipsis;
     }
 
     input[data-edit="true"] {
