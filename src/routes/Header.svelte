@@ -6,6 +6,9 @@
 <header>
 	<nav> <!-- provides accesibility for screen readers -->
 		<ul>
+			<li aria-current={page.url.pathname === '/login' ? 'page' : undefined}> <!-- Temporary -->
+				<a href={resolve('/login')}>Login</a>
+			</li>
 			<li aria-current={page.url.pathname === '/' ? 'page' : undefined}>
 				<a href={resolve('/')}>Home</a>
 			</li>

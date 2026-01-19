@@ -30,6 +30,17 @@ declare global {
 		name: string;
 		exercises: ExerciseTemplateType[];
 	}
+
+	type SearchEntryType = {
+		name: string;
+		dates: string[];
+		effortMeasure: WeightEffortType[]; 
+	}
+
+	type WeightEffortType = {
+		reps: number[];
+		weights: number[];
+	}
 }
 
 export {};

@@ -23,40 +23,40 @@
 
 <div>
     <Accordion inactiveClass="border-gray-300 bg-sky-600" activeClass="border-gray-300 bg-sky-400">
-    <AccordionItem>
-        {#snippet header()}
-            <div class="accordion-header">
-                <input type="text" 
-                    bind:value={workout.name} 
-                    data-edit={edit} 
-                    onfocus={() => (edit = true)} 
-                    onblur={() => (edit = false)}
-                    onclick={(e) => (e.stopPropagation())}
-                    onkeydown={(e) => (e.stopPropagation())}
-                />
-                <div class="text-sm">{workout.date}</div>
-            </div>    
-        {/snippet}
-        {#snippet arrowup()}<Up width=1.25rem height=1.25rem/>{/snippet}
-        {#snippet arrowdown()}<Down width=1.25rem height=1.25rem/>{/snippet}
-        
-        {#if workout.exercises.length > 0}
-            <ul>
-                {#each workout.exercises as _, i}
-                    <li>
-                        <Exercise bind:exercise={workout.exercises[i]} />
-                    </li>
-                {/each}
-            </ul>
-        {:else}
-            <p class="flex justify-center p-2">No exercises currently included in workout.</p>
-        {/if}
+        <AccordionItem>
+            {#snippet header()}
+                <div class="accordion-header">
+                    <input type="text" 
+                        bind:value={workout.name} 
+                        data-edit={edit} 
+                        onfocus={() => (edit = true)} 
+                        onblur={() => (edit = false)}
+                        onclick={(e) => (e.stopPropagation())}
+                        onkeydown={(e) => (e.stopPropagation())}
+                    />
+                    <div class="text-sm">{workout.date}</div>
+                </div>    
+            {/snippet}
+            {#snippet arrowup()}<Up width=1.25rem height=1.25rem/>{/snippet}
+            {#snippet arrowdown()}<Down width=1.25rem height=1.25rem/>{/snippet}
+            
+            {#if workout.exercises.length > 0}
+                <ul>
+                    {#each workout.exercises as _, i}
+                        <li>
+                            <Exercise bind:exercise={workout.exercises[i]} />
+                        </li>
+                    {/each}
+                </ul>
+            {:else}
+                <p class="flex justify-center p-2">No exercises currently included in workout.</p>
+            {/if}
 
-        <div class="flex justify-center">
-            <button aria-label="Add exercise" class="material-symbols--library-add-rounded" onclick={addExercise}></button>
-        </div>
-        
-    </AccordionItem>
+            <div class="flex justify-center">
+                <button aria-label="Add exercise" class="material-symbols--library-add-rounded" onclick={addExercise}></button>
+            </div>
+            
+        </AccordionItem>
     </Accordion>
 </div>
 

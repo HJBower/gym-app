@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount, setContext } from "svelte";
     import Workout from "./Workout.svelte";
-	import { Modal } from "flowbite-svelte";
+	import { Accordion, AccordionItem, Modal } from "flowbite-svelte";
 	import { EXERCISE_CONTEXT }  from "$lib/contexts/exercise";
 	import { NUM_REQUESTED, WEBSITE_URL, WEEKDAYS } from "$lib/constants";
     import { workoutTemplates } from "$lib/templates.svelte";
@@ -164,18 +164,43 @@
 		return name.concat(" - ", descrip);
 	} 
 
-	function filterExercises() {
-		let filtered: string[] = [];
+	function search() {
 
-		for (const workout of workouts) {
-			for (const exercise of workout.exercises) {
-				if (exercise.name.toUpperCase().startsWith(searchTerm.toUpperCase())) {
-					filtered.push(exercise.name);
+		let searchEntries: SearchEntryType[] = [];
+
+		let filteredNames = exerciseNames.filter((name: string) => 
+            name.toLowerCase().includes(searchTerm.toLowerCase()))
+
+		/**
+		 * O(n^3) but likely not an issue.
+		*/
+		for (const name of filteredNames) {
+			let dates: string[] = [];
+			let weightEffort: WeightEffortType[] = [];
+
+			for (const workout of workouts) {
+				for (const exercise of workout.exercises) {
+
+					if (name == exercise.name) {
+						dates.push(workout.date);
+						weightEffort.push({
+							reps: exercise.reps,
+							weights: exercise.weights
+						})
+					}
 				}
 			}
+
+			searchEntries.push({
+				name: name,
+				dates: dates,
+				effortMeasure: weightEffort
+			})
 		}
 
-		return filtered;
+		console.log(searchEntries);
+
+		return searchEntries;
 	}
 
 
@@ -202,6 +227,7 @@
 		<div data-focus={focus}>
 			<span class="material-symbols--search-rounded" ></span>
 			<input bind:value={searchTerm} placeholder="Search..." onfocus={() => focus = true} onblur={() => focus = false}>
+			<button aria-label="Clear search" class="material-symbols--cancel-outline-rounded" onclick={() => searchTerm = ""}></button>
 		</div>
 	</div>
 
@@ -228,15 +254,40 @@
 		</ul>
 	{:else}
 		<ul>
-			{#each filterExercises() as name}
+			{#each search() as entry}
 				<li>
-					{name}
+					<Accordion flush multiple>
+						<AccordionItem open>
+							{#snippet header()}
+								<h1 class="font-bold text-xl">{entry.name}</h1>
+							{/snippet}
+							
+							{#each Array.from({length: entry.dates.length}) as _, i}
+								<div class="entry-data">
+									<div class="w-16">{entry.dates[i]}</div>
+									<div class="labels">
+										<h>Weight</h>
+										<h>Reps</h>
+									</div>
+
+									<ul class="w-60/100">
+										{#each Array.from({length: entry.effortMeasure[i].reps.length}) as _, j}
+											<li>
+												<div class="set">
+													<div>{entry.effortMeasure[i].weights[j]}</div>
+													<div>{entry.effortMeasure[i].reps[j]}</div>
+												</div>
+											</li>
+										{/each}
+									</ul>
+								</div>
+							{/each}
+						</AccordionItem>	
+					</Accordion>
 				</li>	
 			{/each}
 		</ul>
 	{/if}
-
-	
 
 	<p>{JSON.stringify(workouts, null, 2)}</p>
 	<p>{exerciseNames}</p>
@@ -248,6 +299,38 @@
 </div>
 
 <style>
+
+	.set {
+        display: flex;
+        flex-direction: column;
+        width: 2.4rem;
+    }
+
+	.labels {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        font-weight: bold;
+    }
+
+	.entry-data {
+		display: flex;
+		align-items: center;
+		
+		margin-left: 2rem;
+		gap: 2rem;
+
+		font-weight: lighter;
+	}
+
+	.entry-data > ul {
+		display: flex;
+		justify-content: start;
+
+		gap: 0.8rem;
+
+		font-weight: normal;
+	}	
 
 	.search-bar {
 		display: flex;
@@ -390,7 +473,6 @@
 	}
 
 	.material-symbols--add-circle-outline-rounded {
-
         width: 2rem;
 		height: 2rem;
 
@@ -407,7 +489,6 @@
     }
 
 	.material-symbols--search-rounded {
-
 		width: 1rem;
 		height: 1rem;
 
@@ -420,6 +501,25 @@
 		mask-repeat: no-repeat;
 		-webkit-mask-size: 100% 100%;
 		mask-size: 100% 100%;
+	}
+
+	.material-symbols--cancel-outline-rounded {
+		width: 1rem;
+		height: 1rem;
+
+		--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='m12 13.4l2.9 2.9q.275.275.7.275t.7-.275t.275-.7t-.275-.7L13.4 12l2.9-2.9q.275-.275.275-.7t-.275-.7t-.7-.275t-.7.275L12 10.6L9.1 7.7q-.275-.275-.7-.275t-.7.275t-.275.7t.275.7l2.9 2.9l-2.9 2.9q-.275.275-.275.7t.275.7t.7.275t.7-.275zm0 8.6q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8'/%3E%3C/svg%3E");
+		
+		background-color: black;
+		-webkit-mask-image: var(--svg);
+		mask-image: var(--svg);
+		-webkit-mask-repeat: no-repeat;
+		mask-repeat: no-repeat;
+		-webkit-mask-size: 100% 100%;
+		mask-size: 100% 100%;
+	}
+
+	.material-symbols--cancel-outline-rounded:hover {
+		background-color: white;
 	}
 
 </style>
