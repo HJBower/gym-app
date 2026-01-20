@@ -1,13 +1,23 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 
 	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
+	"github.com/golang-jwt/jwt/v5"
 )
+
+var users = map[string]string{
+	"me": "password123",
+}
+
+var secret = []byte("my-secret")
 
 func main() {
 	router := gin.Default()
@@ -17,22 +27,28 @@ func main() {
 	config.AllowAllOrigins = true
 	router.Use(cors.New(config))
 
-	/**
-	 * 	Get and set the workouts.
-	 */
-	router.GET("/workouts", getWorkouts)
-	router.POST("/workouts", setWorkouts)
+	router.POST("/login", Login)
+	router.POST("/signup", Signup)
 
-	/**
-	 * 	Get and set the workout templates.
-	 */
-	router.GET("/templates", getTemplates)
-	router.POST("/templates", setTemplates)
+	router.Use(AuthJWT())
+	{
+		/**
+		* 	Get and set the workouts.
+		 */
+		router.GET("/workouts", GetWorkouts)
+		router.POST("/workouts", SetWorkouts)
+
+		/**
+		* 	Get and set the workout templates.
+		 */
+		router.GET("/templates", GetTemplates)
+		router.POST("/templates", SetTemplates)
+	}
 
 	router.Run("localhost:8081")
 }
 
-func getWorkouts(c *gin.Context) {
+func GetWorkouts(c *gin.Context) {
 	count, exists := c.GetQuery("count")
 
 	if !exists {
@@ -43,6 +59,7 @@ func getWorkouts(c *gin.Context) {
 	val, err := strconv.ParseInt(count, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "count is not in valid format"})
+		return
 	}
 
 	if val > int64(len(Workouts)) {
@@ -52,29 +69,31 @@ func getWorkouts(c *gin.Context) {
 	c.JSON(http.StatusOK, Workouts[0:val])
 }
 
-func setWorkouts(c *gin.Context) {
+func SetWorkouts(c *gin.Context) {
 
 	var newWorkouts []Workout
 	if err := c.ShouldBindJSON(&newWorkouts); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON for new workouts"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON for new workouts"})
+		return
 	}
 
 	Workouts = newWorkouts
 
-	c.JSON(http.StatusAccepted, gin.H{"accepted": "workouts accepted"})
+	c.JSON(http.StatusAccepted, gin.H{"accepted": "Workouts accepted"})
 }
 
-func getTemplates(c *gin.Context) {
+func GetTemplates(c *gin.Context) {
 	count, exists := c.GetQuery("count")
 
 	if !exists {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "value is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Value is required"})
 		return
 	}
 
 	val, err := strconv.ParseInt(count, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "count is not in valid format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Count not in valid format"})
+		return
 	}
 
 	if val > int64(len(WorkoutTemplates)) {
@@ -84,14 +103,104 @@ func getTemplates(c *gin.Context) {
 	c.JSON(http.StatusOK, WorkoutTemplates[0:val])
 }
 
-func setTemplates(c *gin.Context) {
+func SetTemplates(c *gin.Context) {
 
 	var newWorkoutTemplates []WorkoutTemplate
 	if err := c.ShouldBindJSON(&newWorkoutTemplates); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON for new workout templates"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON for new workout templates"})
+		return
 	}
 
 	WorkoutTemplates = newWorkoutTemplates
 
-	c.JSON(http.StatusAccepted, gin.H{"accepted": "workout templates accepted"})
+	c.JSON(http.StatusAccepted, gin.H{"accepted": "Workout templates accepted"})
+}
+
+func Signup(c *gin.Context) {
+
+	type CreateUserRequest struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	var req CreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON for sign-up request"})
+		return
+	}
+
+	// Does user already exist
+	_, exists := users[req.Username]
+	if exists {
+		c.JSON(http.StatusConflict, gin.H{"error": "user is already registered"})
+		return
+	}
+
+	// Save user
+	users[req.Username] = req.Password
+
+	c.JSON(http.StatusOK, gin.H{"accept": "user has been created"})
+}
+
+func Login(c *gin.Context) {
+
+	type LoginRequest struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	var req LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON for login request"})
+		return
+	}
+
+	// Validate user; obviously extend to be more intricate
+	password, exists := users[req.Username]
+	if !exists || password != req.Password {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	// Create JWT; currently have no claims
+	token := jwt.New(jwt.SigningMethodHS256)
+	signedToken, err := token.SignedString(secret)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": signedToken})
+}
+
+func AuthJWT() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		authHeader := c.GetHeader("Authorization")
+
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer") {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing or invalid"})
+			c.Abort() // Everything else after middleware is not called
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			// Perform type assertion of signing method
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return secret, nil
+		})
+
+		if err != nil || !token.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort() // Everything else after middleware is not called
+			return
+		}
+
+		c.Next()
+	}
 }

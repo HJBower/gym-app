@@ -1,18 +1,56 @@
 <script lang="ts">
-    import { goto } from '$app/navigation';
+    import { Toast} from "flowbite-svelte";
     import { WEBSITE_URL } from "$lib/constants";
 
     let revealPassword = $state(false);
-    let loginScreen = $state(true);
 
-    async function login() {
+    let email = $state("");
+    let pwd = $state("");
+    let pwdRetype = $state("");
+
+    let invalidPassword = $state(false);
+    let passwordsNotMatch = $state(false);
+
+    type ToastItem = {
+        id: number,
+        message: string,
+    }
+
+    let toast = $state<ToastItem>();
+    let toastExists = false;
+
+    async function signup() {
+
+        if (pwd !== pwdRetype) {
+            console.log("Passwords do not match!");
+            
+            toast = {
+                id: 2,
+                message: "Passwords do not match."
+            }
+            toastExists = true;
+
+            return;
+        }
+
+        if (!isPasswordValid(pwd)) {
+            console.log("Password is not valid!");
+
+            toast = {
+                id: 3,
+                message: "Password is not valid."
+            }
+            toastExists = true;
+
+            return;
+        }
 
         try {
 			await fetch(`${WEBSITE_URL}/login`, {
 				method: "POST",
 				body: JSON.stringify({
-                    username: "me",
-                    password: "password123"
+                    username: email,
+                    password: pwd
                 }),
 				headers: {
 					"Content-type": "application/json charset=UTF-8"
@@ -26,13 +64,25 @@
 		}
     }
 
+    function isPasswordValid(password: string) {
+        if (password.length < 8) {
+            return false
+        }
+
+        const symRe = new RegExp(".*[$@#&].*");
+        const numRe = new RegExp(".*[0-9].*");
+
+        return symRe.test(password) && numRe.test(password)
+    }
+
 
 </script>
 
 <svelte:head>
-	<title>Login</title>
+	<title>Signup</title>
 	<meta name="description" content="Svelte demo app" />
 </svelte:head>
+  
 
 <div>
     <form>
@@ -40,38 +90,51 @@
             <div class="flex flex-col">
                 <div class="flex flex-col">
                     <label for="email">E-mail:</label>
-                    <input id="email" value="" type="text" placeholder="Enter e-mail...">
+                    <input id="email" bind:value={email} type="text" placeholder="Enter e-mail...">
                 </div>
                 <div class="flex flex-col">
                     <label for="password">Password:</label>
                     <div>
-                        <input id="password" value="" type={revealPassword ? "text" : "password"} placeholder="Enter password...">
+                        <input id="password" bind:value={pwd} type={revealPassword ? "text" : "password"} placeholder="Enter password...">
                         <input class="check" type="checkbox" bind:checked={revealPassword}>
+                    </div>
+                    <label for="password">Re-enter Password:</label>
+                    <div>
+                        <input id="password" bind:value={pwdRetype} type="password" placeholder="Enter password...">
                     </div>
                 </div>
             </div>
         </div>
     </form>
     
+
     <div class="flex flex-col items-center justify-center gap-2 m-4">
-        <button onclick={login}>Login</button>
-        <div class="flex flex-col items-center justify-center">
-            Do you have an account?
-            <button onclick={() => goto("/signup")} class="signup">Sign-up</button>
-        </div>
-        </div>
+        <p>A valid password must:</p>
+        <ul>
+            <li>
+                Contain at least 8 characters
+            </li>
+            <li>
+                Contain a symbol ($, &, @)
+            </li>
+            <li>
+                Contain a digit [0-9]
+            </li>
+        </ul>
+        <button onclick={signup}>Sign-up</button>
+    </div>
+
+    <p>
+        {toast?.message}
+        {toast?.id}
+    </p>
+
 </div>
 
 <style>
 
-    .signup {
-        background-color: white;
-        text-decoration: underline;
-    }
-
-    .signup:hover {
-        background-color: white;
-        color: var(--button-color-hover);
+    li {
+        list-style-type: circle;
     }
 
     button {
