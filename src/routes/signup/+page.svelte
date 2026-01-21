@@ -1,142 +1,175 @@
 <script lang="ts">
-    import { Toast} from "flowbite-svelte";
+    import { goto } from '$app/navigation';
     import { WEBSITE_URL } from "$lib/constants";
+    import { json } from '@sveltejs/kit';
+
+    let user = $state("");
+    let pwd = $state("");
+    let rePwd = $state("");
+
+    let error = $state({
+        triggered: false,
+        message: ""
+    });
 
     let revealPassword = $state(false);
+    
+    let animating = $state(false);
+    // Plays login animation; does not block login prcess while executing
+    function playAnimation() {
+        if (animating) return; // prevent retrigger spam
+        animating = true;
 
-    let email = $state("");
-    let pwd = $state("");
-    let pwdRetype = $state("");
-
-    let invalidPassword = $state(false);
-    let passwordsNotMatch = $state(false);
-
-    type ToastItem = {
-        id: number,
-        message: string,
-    }
-
-    let toast = $state<ToastItem>();
-    let toastExists = false;
+        setTimeout(() => {
+            animating = false;
+        }, 1000); // duration must match CSS
+     }
 
     async function signup() {
+        // try {
+		// 	const res = await fetch(`${WEBSITE_URL}/signup`, {
+		// 		method: "POST",
+		// 		body: JSON.stringify({
+        //             username: user,
+        //             password: pwd
+        //         }),
+		// 		headers: {
+		// 			"Content-Type": "application/json charset=UTF-8"
+		// 		}
+		// 	})
 
-        if (pwd !== pwdRetype) {
-            console.log("Passwords do not match!");
-            
-            toast = {
-                id: 2,
-                message: "Passwords do not match."
-            }
-            toastExists = true;
+        //     if (!res.ok) {
+        //         throw new Error("Request failed.");
+        //     }
 
-            return;
-        }
+        //     // TODO: find more secure way to store jwt.
+        //     await res.json()
+        //         .then((data) => localStorage.setItem("jwtToken", data.token))
+		// 	    .catch((reason) => console.log(reason));
 
-        if (!isPasswordValid(pwd)) {
-            console.log("Password is not valid!");
-
-            toast = {
-                id: 3,
-                message: "Password is not valid."
-            }
-            toastExists = true;
-
-            return;
-        }
-
-        try {
-			await fetch(`${WEBSITE_URL}/login`, {
-				method: "POST",
-				body: JSON.stringify({
-                    username: email,
-                    password: pwd
-                }),
-				headers: {
-					"Content-type": "application/json charset=UTF-8"
-				}
-			})
-			.then((success) => console.log(success))
-			.catch((reason) => console.log(reason))
-
-		} catch (error) {
-			throw error;
-		}
+		// } catch (error) {
+		// 	throw error;
+		// }
     }
 
-    function isPasswordValid(password: string) {
-        if (password.length < 8) {
-            return false
+    function emailValid(email: string) {
+        const re =  new RegExp("^.*$", "g");
+        return re.exec(email) != null;
+    }
+
+    function passwordValid(password: string) {
+        const re =  new RegExp("^.*$", "gm");
+        return re.exec(password) != null;
+    }
+
+    function validInput() {
+
+        if (!emailValid(user)) {
+            error.triggered = true;
+            error.message = "*Email is not valid."
+            return;
         }
 
-        const symRe = new RegExp(".*[$@#&].*");
-        const numRe = new RegExp(".*[0-9].*");
+        if (!passwordValid(pwd)) {
+            error.triggered = true;
+            error.message = "*Password is not valid."
+            return;
+        }
 
-        return symRe.test(password) && numRe.test(password)
+        if (pwd !== rePwd) {
+            error.triggered = true;
+            error.message = "*Passwords do not match."
+            return;
+        }
+
+        error.triggered = false;
+        return true
     }
 
 
 </script>
 
 <svelte:head>
-	<title>Signup</title>
+	<title>Login</title>
 	<meta name="description" content="Svelte demo app" />
 </svelte:head>
-  
 
-<div class="flex justify-center items-center">
-    <div class="signup">
+<div class="top">
+    <div class="login" class:animate={animating}>
         <form>
             <div class="flex flex-col items-center justify-center">
                 <div class="flex flex-col gap-4">
-                    <div class="flex flex-col ">
+                    <div class="flex flex-col">
                         <label for="email">E-mail:</label>
-                        <input id="email" bind:value={email} type="text" placeholder="Enter e-mail...">
+                        <input id="email" bind:value={user} type="text" placeholder="Enter e-mail...">
                     </div>
-
-                   <div class="flex flex-col">
-                    <label for="password">Password:</label>
-                        <div>
+                    <div class="flex flex-col">
+                        <label for="password">Password:</label>
+                        <div class="password-box">
                             <input id="password" bind:value={pwd} type={revealPassword ? "text" : "password"} placeholder="Enter password...">
                             <input class="check" type="checkbox" bind:checked={revealPassword}>
                         </div>
                     </div>
                     <div class="flex flex-col">
-                        <label for="password">Re-enter Password:</label>
-                        <div>
-                            <input id="password" bind:value={pwdRetype} type="password" placeholder="Enter password...">
-                        </div>
+                        <label for="re-password">Re-enter Password:</label>
+                        <input id="re-password" bind:value={rePwd} type="password" placeholder="Enter password...">
                     </div>
+
                 </div>
             </div>
         </form>
+        
         <div class="flex flex-col items-center justify-center gap-2 m-4">
-            <p>A valid password must:</p>
+            <p>Rules for a valid password:</p>
             <ul>
                 <li>
-                    Contain at least 8 characters
+                    Must be at least 8 characters
                 </li>
                 <li>
-                    Contain a symbol ($, &, @)
+                    Must contain a digit
                 </li>
                 <li>
-                    Contain a digit [0-9]
+                    Must contain a symbol
                 </li>
             </ul>
-            <button onclick={signup}>Sign-up</button>
+            <button onclick={() => {validInput(); playAnimation(); signup()}}>Sign-up</button>
+            {#if error.triggered}
+                <p class="errors">
+                    {error.message}
+                </p>
+            {/if}
         </div>
-
-        <p>
-            {toast?.message}
-            {toast?.id}
-        </p>
-
     </div>
 </div>
 
 <style>
 
-    p, li {
+    .errors {
+        padding-top: 1rem;
+        color: rgb(255, 47, 0);
+    }
+
+    li {
+        color: white;
+        list-style: circle;
+    }
+
+    .animate {
+        animation: flashshadow 1s;
+    }
+
+    @keyframes flashshadow {
+       35% {box-shadow: 0px 0px 20px 2px var(--button-color-default);}
+    }
+
+    .top {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: auto;
+    }
+
+    p {
         color: white;
     }
 
@@ -145,19 +178,29 @@
         color: white;
     }
 
-    .signup {
-        background: linear-gradient(var(--bg-color-primary), var(--bg-color-secondary));
+    .login {
+        position: relative;
+
+        background-color: var(--bg-color-secondary);
         border-radius: 1rem;
-        width: 50%;
-        padding: 2rem;
-        box-shadow: 0px 0px 20px 2px #5f5f5f;
+       
+        padding: 2.5rem;
+        box-shadow: 0px 0px 20px 2px var(--highlight);
     }
 
-    li {
-        list-style-type: circle;
+    .signup {
+        background-color: unset;
+        color: white;
+        text-decoration: underline;
+    }
+
+    .signup:hover {
+        background-color: unset;
+        color: var(--highlight);
     }
 
     button {
+        font-weight: bold;
         padding-inline: 0.5rem;
         border-radius: var(--border-radius);
         background-color: var(--button-color-default);
@@ -169,7 +212,7 @@
 
     input {
         border-radius: var(--border-radius);
-        border-color: var(--border-color);
+        border-color:rgba(255, 255, 255, 0);
         width: 15rem;
     }
 
@@ -177,10 +220,18 @@
         color: grey;
     }
 
+    .password-box {
+        position: relative;
+    }
+
     .check {
         width: 1rem;
         height: 1rem;
 
+        position: absolute;
+        right: -1.5rem;
+        bottom: 25%;
+        
         appearance: none;
         -webkit-appearance: none;
         -moz-appearance: none;

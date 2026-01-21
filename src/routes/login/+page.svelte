@@ -1,31 +1,50 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { WEBSITE_URL } from "$lib/constants";
+    import { json } from '@sveltejs/kit';
+
+    let user = $state("me");
+    let pwd = $state("password123");
 
     let revealPassword = $state(false);
-    let loginScreen = $state(true);
+    
+    let animating = $state(false);
+    // Plays login animation; does not block login prcess while executing
+    function playAnimation() {
+        if (animating) return; // prevent retrigger spam
+        animating = true;
+
+        setTimeout(() => {
+            animating = false;
+        }, 1000); // duration must match CSS
+     }
 
     async function login() {
-
         try {
-			await fetch(`${WEBSITE_URL}/login`, {
+			const res = await fetch(`${WEBSITE_URL}/login`, {
 				method: "POST",
 				body: JSON.stringify({
-                    username: "me",
-                    password: "password123"
+                    username: user,
+                    password: pwd
                 }),
 				headers: {
-					"Content-type": "application/json charset=UTF-8"
+					"Content-Type": "application/json charset=UTF-8"
 				}
 			})
-			.then((success) => console.log(success))
-			.catch((reason) => console.log(reason))
+
+            if (!res.ok) {
+                throw new Error("Request failed.");
+            }
+
+            // TODO: find more secure way to store jwt.
+            await res.json()
+                .then((data) => localStorage.setItem("jwtToken", data.token))
+			    .catch((reason) => console.log(reason));
 
 		} catch (error) {
 			throw error;
 		}
     }
-
 
 </script>
 
@@ -35,37 +54,45 @@
 </svelte:head>
 
 <div class="top">
-    <div class="login">
+    <div class="login" class:animate={animating}>
         <form>
             <div class="flex flex-col items-center justify-center">
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col">
                         <label for="email">E-mail:</label>
-                        <input id="email" value="" type="text" placeholder="Enter e-mail...">
+                        <input id="email" bind:value={user} type="text" placeholder="Enter e-mail...">
                     </div>
                     <div class="flex flex-col">
                         <label for="password">Password:</label>
-                        <div>
-                            <input id="password" value="" type={revealPassword ? "text" : "password"} placeholder="Enter password...">
+                        <div class="password-box">
+                            <input id="password" bind:value={pwd} type={revealPassword ? "text" : "password"} placeholder="Enter password...">
                             <input class="check" type="checkbox" bind:checked={revealPassword}>
                         </div>
                     </div>
+
                 </div>
             </div>
         </form>
         
         <div class="flex flex-col items-center justify-center gap-2 m-4">
-            <button onclick={login}>Login</button>
+            <button onclick={() => {playAnimation(); login()}}>Login</button>
             <div class="flex flex-col items-center justify-center">
                 <p>Do you have an account?</p>
                 <button onclick={() => goto("/signup")} class="signup">Sign-up</button>
             </div>
         </div>
-
     </div>
 </div>
 
 <style>
+
+    .animate {
+        animation: flashshadow 1s;
+    }
+
+    @keyframes flashshadow {
+       35% {box-shadow: 0px 0px 20px 2px var(--button-color-default);}
+    }
 
     .top {
         display: flex;
@@ -84,11 +111,12 @@
     }
 
     .login {
+        position: relative;
+
         background-color: var(--bg-color-secondary);
         border-radius: 1rem;
-        width: 50%;
-        height: 100%;
-        padding: 2rem;
+       
+        padding: 2.5rem;
         box-shadow: 0px 0px 20px 2px var(--highlight);
     }
 
@@ -104,6 +132,7 @@
     }
 
     button {
+        font-weight: bold;
         padding-inline: 0.5rem;
         border-radius: var(--border-radius);
         background-color: var(--button-color-default);
@@ -123,10 +152,18 @@
         color: grey;
     }
 
+    .password-box {
+        position: relative;
+    }
+
     .check {
         width: 1rem;
         height: 1rem;
 
+        position: absolute;
+        right: -1.5rem;
+        bottom: 25%;
+        
         appearance: none;
         -webkit-appearance: none;
         -moz-appearance: none;

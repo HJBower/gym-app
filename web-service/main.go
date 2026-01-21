@@ -27,6 +27,7 @@ func main() {
 	// Configure CORS
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
+	config.AllowHeaders = []string{"Authorization", "Content-Type"}
 	router.Use(cors.New(config))
 
 	router.POST("/login", Login)

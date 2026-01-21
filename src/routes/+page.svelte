@@ -59,8 +59,13 @@
 		});
 
 		try {
-			
-			const res = await fetch(`${WEBSITE_URL}/workouts?${params}`);
+			const res = await fetch(`${WEBSITE_URL}/workouts?${params}`, {
+				method: "GET",
+				headers: {
+					"Authorization": `Bearer ${localStorage.getItem("jwtToken")}`,
+					"Content-Type": "application/json"
+				}
+			});
 
 			if (!res.ok) {
 				throw new Error("Request failed.");
@@ -444,12 +449,14 @@
 	}
 
 	.workout-addition > div {
+		background-color: black;
+		color: white;
 		width: 25%;
 		display: flex;
 		justify-content: space-between;
 		border: 0.1rem solid;
 		border-radius: 2rem;
-		border-color: var(--color-gray-300);
+		border-color: grey;
 	}
 
 	.workout-addition button {

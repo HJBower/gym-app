@@ -95,18 +95,22 @@
 	}
 
 	button {
+		font-weight: bold;
+
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		border: 0.1rem solid;
 		width: fit-content;
 		padding-inline: 0.4rem;
+
+		background-color: var(--button-color-default);
 		border-radius: var(--border-radius);
-		border-color: var(--color-gray-300);
 	}
 
 	button:hover {
-		background-image: radial-gradient(circle, var(--button-color-hover) 0%, var(--button-color-default) 20%, white 100%);
+		background-color: var(--button-color-hover);
+		box-shadow: 0px 0px 10px 2px var(--button-color-default);
 	}
 	
 </style>
