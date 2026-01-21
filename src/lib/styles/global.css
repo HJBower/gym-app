@@ -1,13 +1,16 @@
 :root {
-    --bg-color-primary: var(--color-sky-600);
-    --bg-color-secondary: var(--color-sky-400);
+    --bg-color-primary: rgb(8, 8, 8);
+    --bg-color-secondary: rgb(20, 20, 20);
+    --bg-color-tersiary: rgb(33, 33, 33);
 
-    --button-color-default: var(--color-blue-400);
-    --button-color-hover: var(--color-blue-600);
+    --button-color-default: rgb(138, 249, 2);
+    --button-color-hover: rgb(90, 161, 4);
+
+    --highlight: rgb(78, 21, 153);
 
     --button-color-negative-default: var(--color-red-400);
     --button-color-negative-hover: var(--color-red-600);
 
     --border-radius: 1rem;
-    --border-color: var(--color-gray-300)
+    --border-color: var(--color-gray-300);
 }

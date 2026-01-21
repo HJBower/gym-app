@@ -23,13 +23,15 @@
 	}
 
 	main {
-		flex: 1;
+		flex: auto;
 		display: flex;
 		flex-direction: column;
 		padding: 1rem;
-		width: 100%;
-		max-width: 64rem;
-		margin: 0 auto;
+
 		box-sizing: border-box;
+
+		background-color: #000000;
+		background-image: radial-gradient(var(--highlight) 2px, var(--bg-color-secondary) 2px);
+		background-size: 40px 40px;
 	}
 </style>
