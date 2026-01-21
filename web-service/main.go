@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"net/http"
 
@@ -17,6 +18,7 @@ var users = map[string]string{
 	"me": "password123",
 }
 
+// TODO: env variable
 var secret = []byte("my-secret")
 
 func main() {
@@ -30,19 +32,19 @@ func main() {
 	router.POST("/login", Login)
 	router.POST("/signup", Signup)
 
-	router.Use(AuthJWT())
+	auth := router.Group("/", AuthJWT())
 	{
 		/**
 		* 	Get and set the workouts.
 		 */
-		router.GET("/workouts", GetWorkouts)
-		router.POST("/workouts", SetWorkouts)
+		auth.GET("/workouts", GetWorkouts)
+		auth.POST("/workouts", SetWorkouts)
 
 		/**
 		* 	Get and set the workout templates.
 		 */
-		router.GET("/templates", GetTemplates)
-		router.POST("/templates", SetTemplates)
+		auth.GET("/templates", GetTemplates)
+		auth.POST("/templates", SetTemplates)
 	}
 
 	router.Run("localhost:8081")
@@ -162,8 +164,15 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// Create JWT; currently have no claims
-	token := jwt.New(jwt.SigningMethodHS256)
+	// Create JWT
+	// TODO: create UUID for the JTI field.
+	claims := &jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(8 * time.Hour)),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		Subject:   req.Username,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString(secret)
 
 	if err != nil {
