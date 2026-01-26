@@ -3,9 +3,9 @@
     import { WEBSITE_URL } from "$lib/constants";
     import { json } from '@sveltejs/kit';
 
-    let user = $state("");
-    let pwd = $state("");
-    let rePwd = $state("");
+    let user = $state("myemail@test.com");
+    let pwd = $state("MyPassword123@");
+    let rePwd = $state("MyPassword123@");
 
     let error = $state({
         triggered: false,
@@ -26,60 +26,68 @@
      }
 
     async function signup() {
-        // try {
-		// 	const res = await fetch(`${WEBSITE_URL}/signup`, {
-		// 		method: "POST",
-		// 		body: JSON.stringify({
-        //             username: user,
-        //             password: pwd
-        //         }),
-		// 		headers: {
-		// 			"Content-Type": "application/json charset=UTF-8"
-		// 		}
-		// 	})
 
-        //     if (!res.ok) {
-        //         throw new Error("Request failed.");
-        //     }
+        if (!validInput()) {
+            throw new Error("Whoopsie")
+        }
 
-        //     // TODO: find more secure way to store jwt.
-        //     await res.json()
-        //         .then((data) => localStorage.setItem("jwtToken", data.token))
-		// 	    .catch((reason) => console.log(reason));
+        console.log(user);
+        console.log(pwd);
 
-		// } catch (error) {
-		// 	throw error;
-		// }
+        try {
+			const res = await fetch(`${WEBSITE_URL}/signup`, {
+				method: "POST",
+				body: JSON.stringify({
+                    username: user,
+                    password: pwd
+                }),
+				headers: {
+					"Content-Type": "application/json charset=UTF-8"
+				}
+			})
+
+            if (!res.ok) {
+                throw new Error("Request failed.");
+            }
+
+            // TODO: find more secure way to store jwt.
+            await res.json()
+                .then((data) => localStorage.setItem("jwtToken", data.token))
+			    .catch((reason) => console.log(reason));
+
+		} catch (error) {
+			throw error;
+		}
     }
 
     function emailValid(email: string) {
-        const re =  new RegExp("^.*$", "g");
-        return re.exec(email) != null;
+        const re =  /^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$/g;
+        return email.match(re) != null;
     }
 
     function passwordValid(password: string) {
-        const re =  new RegExp("^.*$", "gm");
-        return re.exec(password) != null;
+        const re = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%&()]).{8,40}$/g;
+        return password.match(re) != null;
     }
 
     function validInput() {
 
         if (!emailValid(user)) {
             error.triggered = true;
-            error.message = "*Email is not valid."
-            return;
+            error.message = "Email is not valid!"
+            return false;
         }
 
         if (!passwordValid(pwd)) {
             error.triggered = true;
-            error.message = "*Password is not valid."
-            return;
+            error.message = "Password is not valid!"
+            return false;
         }
 
         if (pwd !== rePwd) {
             error.triggered = true;
-            error.message = "*Passwords do not match."
-            return;
+            error.message = "Passwords do not match!"
+            return false;
         }
 
         error.triggered = false;
@@ -126,13 +134,13 @@
                     Must be at least 8 characters
                 </li>
                 <li>
-                    Must contain a digit
+                    Must contain a lower and uppercase character
                 </li>
                 <li>
-                    Must contain a symbol
+                    Must contain a digit and symbol
                 </li>
             </ul>
-            <button onclick={() => {validInput(); playAnimation(); signup()}}>Sign-up</button>
+            <button onclick={() => {playAnimation(); signup()}}>Sign-up</button>
             {#if error.triggered}
                 <p class="errors">
                     {error.message}

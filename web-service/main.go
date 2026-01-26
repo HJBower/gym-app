@@ -181,7 +181,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": signedToken})
+	c.JSON(http.StatusSeeOther, gin.H{"token": signedToken})
 }
 
 func AuthJWT() gin.HandlerFunc {

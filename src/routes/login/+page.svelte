@@ -1,10 +1,9 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { WEBSITE_URL } from "$lib/constants";
-    import { json } from '@sveltejs/kit';
 
-    let user = $state("me");
-    let pwd = $state("password123");
+    let user = $state("myemail@test.com");
+    let pwd = $state("MyPassword123@");
 
     let revealPassword = $state(false);
     
@@ -144,7 +143,7 @@
 
     input {
         border-radius: var(--border-radius);
-        border-color:rgba(255, 255, 255, 0);
+        border-color: transparent;
         width: 15rem;
     }
 

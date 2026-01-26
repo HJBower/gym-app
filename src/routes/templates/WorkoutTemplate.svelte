@@ -49,8 +49,8 @@
 
 
 <div>
-    <Accordion inactiveClass="border-gray-300 bg-sky-600" activeClass="border-gray-300 bg-sky-400">
-    <AccordionItem>
+    <Accordion inactiveClass="bg-[var(--button-color-hover)]" activeClass="bg-[var(--button-color-default)]" class="border-0 divide-y-0">
+    <AccordionItem contentClass="bg-[var(--bg-color-secondary)] text-white">
         {#snippet header()}
            <input class="input-template" bind:value={template.name} placeholder="Enter template name..." />
         {/snippet}
@@ -113,9 +113,12 @@
     li {
         flex-shrink: 0;
 
-        border-radius: var(--border-radius);
         border: 0.15rem solid;
-        border-color: var(--border-color);
+        border-color: var(--bg-color-tersiary);
+        border-radius: var(--border-radius);
+
+        background-color: var(--bg-color-primary);
+
         padding-left: 0.8rem;
         padding-right: 0.8rem;
     }

@@ -100,12 +100,14 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		border: 0.1rem solid;
+		
 		width: fit-content;
-		padding-inline: 0.4rem;
+		padding-inline: 0.3rem;
 
 		background-color: var(--button-color-default);
+		
 		border-radius: var(--border-radius);
+		border: 0.1rem solid;
 	}
 
 	button:hover {

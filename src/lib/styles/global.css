@@ -3,14 +3,53 @@
     --bg-color-secondary: rgb(20, 20, 20);
     --bg-color-tersiary: rgb(33, 33, 33);
 
+
     --button-color-default: rgb(138, 249, 2);
     --button-color-hover: rgb(90, 161, 4);
 
     --highlight: rgb(78, 21, 153);
+    --highlight-dark: rgb(61, 17, 120);
 
-    --button-color-negative-default: var(--color-red-400);
-    --button-color-negative-hover: var(--color-red-600);
+    --button-color-negative-default: rgb(231, 12, 12);
+    --button-color-negative-hover: rgb(160, 9, 9);
 
     --border-radius: 1rem;
+    --border-radius-small: 0.2rem;
     --border-color: var(--color-gray-300);
+}
+
+#glow-button {
+    font-weight: bold;
+
+	background-color: var(--button-color-default);
+		
+	border-radius: var(--border-radius);
+	border: 0.1rem solid;
+}
+
+#glow-button:hover {
+    background-color: var(--button-color-hover);
+	box-shadow: 0px 0px 10px 2px var(--button-color-default);
+}
+
+#text-input-area {
+    border: 0.15rem solid;
+	border-radius: var(--border-radius);
+	border-color: var(--bg-color-tersiary);
+
+	background-color: var(--bg-color-primary);
+
+    color: white;
+}
+
+#text-input-area:hover {
+    background-color: var(--bg-color-tersiary);
+}
+
+#input-area-button {
+    background-color: gray;
+}
+
+#input-area-button:hover {
+    background-color: white;
 }

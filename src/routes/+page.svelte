@@ -1,20 +1,21 @@
 <script lang="ts">
     import { onMount, setContext } from "svelte";
     import Workout from "./Workout.svelte";
-	import { Accordion, AccordionItem, Modal } from "flowbite-svelte";
+	import { Modal } from "flowbite-svelte";
 	import { EXERCISE_CONTEXT }  from "$lib/contexts/exercise";
 	import { NUM_REQUESTED, WEBSITE_URL, WEEKDAYS } from "$lib/constants";
     import { workoutTemplates } from "$lib/templates.svelte";
+	// import { BatchUpdate } from "$lib/BatchUpdate";
 
 	let templateModal = $state(false);
 	let description = $state("");
-
-	let focus = $state(false);
 
 	let searchTerm = $state("");
 
 	let workouts: WorkoutType[] = $state([]);
 	let exerciseNames: string[] = $state([]);
+
+	// let batchUpdate = BatchUpdate.getInstance();
 
 	setContext(EXERCISE_CONTEXT, {
 		exerciseNames,
@@ -46,6 +47,8 @@
 				reps: [0],
 				weights: [0.0]
 			}]});
+
+		// batchUpdate.log(weekday);
 	}
 
 	/**
@@ -153,6 +156,8 @@
 					date: `${dd}/${mm}/${yy}`,
 					exercises: exercises
 				});
+
+				return;
 			}
 		}
 	}
@@ -219,20 +224,20 @@
 <div>
 
 	<!-- Add a workout: either Default of from Templates -->
-	<div class="workout-addition">
-		<div >
-			<button class="left" onclick={addWorkout}>Default</button>
-			<div class="addition"><span class="material-symbols--add-circle-outline-rounded"></span></div>
-			<button class="right" onclick={() => templateModal = true}>Template</button>
+	<div class="add-workouts">
+		<div>
+			<button id="glow-button" onclick={addWorkout}>Default</button>
+			<div class="addition"><span class="addition-symbol"></span></div>
+			<button id="glow-button" onclick={() => templateModal = true}>Template</button>
 		</div>
     </div>
 
 	<!-- Search bar for exercises -->
 	<div class="search-bar">
-		<div data-focus={focus}>
-			<span class="material-symbols--search-rounded" ></span>
-			<input bind:value={searchTerm} placeholder="Search..." onfocus={() => focus = true} onblur={() => focus = false}>
-			<button aria-label="Clear search" class="material-symbols--cancel-outline-rounded" onclick={() => searchTerm = ""}></button>
+		<div id="text-input-area">
+			<span class="magnifying-glass"></span>
+			<input bind:value={searchTerm} placeholder="Search...">
+			<button id="input-area-button" class="circle-cross" aria-label="Clear search" onclick={() => searchTerm = ""}></button>
 		</div>
 	</div>
 
@@ -261,34 +266,7 @@
 		<ul>
 			{#each search() as entry}
 				<li>
-					<Accordion flush multiple>
-						<AccordionItem open>
-							{#snippet header()}
-								<h1 class="font-bold text-xl">{entry.name}</h1>
-							{/snippet}
-							
-							{#each Array.from({length: entry.dates.length}) as _, i}
-								<div class="entry-data">
-									<div class="w-16">{entry.dates[i]}</div>
-									<div class="labels">
-										<h>Weight</h>
-										<h>Reps</h>
-									</div>
-
-									<ul class="w-60/100">
-										{#each Array.from({length: entry.effortMeasure[i].reps.length}) as _, j}
-											<li>
-												<div class="set">
-													<div>{entry.effortMeasure[i].weights[j]}</div>
-													<div>{entry.effortMeasure[i].reps[j]}</div>
-												</div>
-											</li>
-										{/each}
-									</ul>
-								</div>
-							{/each}
-						</AccordionItem>	
-					</Accordion>
+					<p>Hello</p>
 				</li>	
 			{/each}
 		</ul>
@@ -305,46 +283,19 @@
 
 <style>
 
-	.set {
-        display: flex;
-        flex-direction: column;
-        width: 2.4rem;
-    }
-
-	.labels {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-around;
-        font-weight: bold;
-    }
-
-	.entry-data {
-		display: flex;
-		align-items: center;
-		
-		margin-left: 2rem;
-		gap: 2rem;
-
-		font-weight: lighter;
-	}
-
-	.entry-data > ul {
-		display: flex;
-		justify-content: start;
-
-		gap: 0.8rem;
-
-		font-weight: normal;
-	}	
-
+	/**
+	 * Search bar. 
+	 */
 	.search-bar {
 		display: flex;
 		justify-content: center;
+
 		padding: 0.5rem;
 	}
 
 	.search-bar input {
 		width: 80%;
+
 		border-style: none;
 		text-overflow: ellipsis;
 	}
@@ -354,7 +305,8 @@
 	}
 
 	.search-bar input::placeholder {
-		color: rgb(255, 255, 255);
+		color: grey;
+        font-style: italic;
 	}
 
 	.search-bar > div {
@@ -362,30 +314,50 @@
 		justify-content: space-evenly;
 		align-items: center;
 
-		border-radius: var(--border-radius);
-		border-color: var(--border-color);
-		background-color: var(--bg-color-primary);
-
 		padding-inline: 0.2rem;
 		padding-block: 0.3rem;
 		
 		width: 25%;
 	}
 
-	.search-bar > div:hover {
-		background-color: var(--bg-color-secondary);
+	.magnifying-glass {
+		width: 1rem;
+		height: 1rem;
+
+		--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l5.6 5.6q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-5.6-5.6q-.75.6-1.725.95T9.5 16m0-2q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14'/%3E%3C/svg%3E");
+
+		background-color: white;
+		-webkit-mask-image: var(--svg);
+		mask-image: var(--svg);
+		-webkit-mask-repeat: no-repeat;
+		mask-repeat: no-repeat;
+		-webkit-mask-size: 100% 100%;
+		mask-size: 100% 100%;
 	}
 
-	.search-bar > div[data-focus="true"] {
-		background-color: var(--bg-color-secondary);
+	.circle-cross {
+		width: 1rem;
+		height: 1rem;
+
+		--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='m12 13.4l2.9 2.9q.275.275.7.275t.7-.275t.275-.7t-.275-.7L13.4 12l2.9-2.9q.275-.275.275-.7t-.275-.7t-.7-.275t-.7.275L12 10.6L9.1 7.7q-.275-.275-.7-.275t-.7.275t-.275.7t.275.7l2.9 2.9l-2.9 2.9q-.275.275-.275.7t.275.7t.7.275t.7-.275zm0 8.6q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8'/%3E%3C/svg%3E");
+		
+		background-color: var(--bg-color-tersiary);
+		-webkit-mask-image: var(--svg);
+		mask-image: var(--svg);
+		-webkit-mask-repeat: no-repeat;
+		mask-repeat: no-repeat;
+		-webkit-mask-size: 100% 100%;
+		mask-size: 100% 100%;
 	}
 
-	p {
-		height: 1.5rem; /* should be text height */
-		overflow-x: hidden;
-		overflow-y: hidden;
+	.circle-cross:hover {
+		background-color: white;
 	}
 
+
+	/**
+	 * Templates modal.
+	 */
 	.templates {
 		display: flex;
 		flex-direction: column;
@@ -426,12 +398,15 @@
 		right: 0;
 	}
 
+	/**
+	 *	Add workouts.
+	 */
 	.addition {
 		position: absolute;
 		left: calc(50% - 1rem);
 		bottom: calc(50% - 1rem);
 
-		background-color: white;
+		background-color: var(--bg-color-primary);
 		width: 2rem;
 		height: 2rem;
 
@@ -442,45 +417,8 @@
 		border-radius: 2rem;
 	}
 
-	.workout-addition {
-		display: flex;
-		justify-content: center;
-		position: relative;
-	}
-
-	.workout-addition > div {
-		background-color: black;
-		color: white;
-		width: 25%;
-		display: flex;
-		justify-content: space-between;
-		border: 0.1rem solid;
-		border-radius: 2rem;
-		border-color: grey;
-	}
-
-	.workout-addition button {
-		width: 50%;
-	}
-
-	.left {
-		border-right-color: rgba(255, 255, 255, 0);
-	}
-
-	.right {
-		border-left-color: rgba(255, 255, 255, 0);
-	}
-
-	.left:hover {
-		background-image: linear-gradient(to left, var(--button-color-hover), rgba(255, 255, 255, 0));
-	}
-
-	.right:hover {
-		background-image: linear-gradient(to right, var(--button-color-hover),  rgba(255, 255, 255, 0));
-	}
-
-	.material-symbols--add-circle-outline-rounded {
-        width: 2rem;
+	.addition > span {
+		width: 2rem;
 		height: 2rem;
 
         --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M11 13v3q0 .425.288.713T12 17t.713-.288T13 16v-3h3q.425 0 .713-.288T17 12t-.288-.712T16 11h-3V8q0-.425-.288-.712T12 7t-.712.288T11 8v3H8q-.425 0-.712.288T7 12t.288.713T8 13zm1 9q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8'/%3E%3C/svg%3E");
@@ -493,40 +431,23 @@
         mask-repeat: no-repeat;
         -webkit-mask-size: 100% 100%;
         mask-size: 100% 100%;
-    }
-
-	.material-symbols--search-rounded {
-		width: 1rem;
-		height: 1rem;
-
-		--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l5.6 5.6q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-5.6-5.6q-.75.6-1.725.95T9.5 16m0-2q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14'/%3E%3C/svg%3E");
-
-		background-color: black;
-		-webkit-mask-image: var(--svg);
-		mask-image: var(--svg);
-		-webkit-mask-repeat: no-repeat;
-		mask-repeat: no-repeat;
-		-webkit-mask-size: 100% 100%;
-		mask-size: 100% 100%;
 	}
 
-	.material-symbols--cancel-outline-rounded {
-		width: 1rem;
-		height: 1rem;
-
-		--svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='m12 13.4l2.9 2.9q.275.275.7.275t.7-.275t.275-.7t-.275-.7L13.4 12l2.9-2.9q.275-.275.275-.7t-.275-.7t-.7-.275t-.7.275L12 10.6L9.1 7.7q-.275-.275-.7-.275t-.7.275t-.275.7t.275.7l2.9 2.9l-2.9 2.9q-.275.275-.275.7t.275.7t.7.275t.7-.275zm0 8.6q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8'/%3E%3C/svg%3E");
-		
-		background-color: black;
-		-webkit-mask-image: var(--svg);
-		mask-image: var(--svg);
-		-webkit-mask-repeat: no-repeat;
-		mask-repeat: no-repeat;
-		-webkit-mask-size: 100% 100%;
-		mask-size: 100% 100%;
+	.add-workouts {
+		display: flex;
+		justify-content: center;
+		position: relative;
 	}
 
-	.material-symbols--cancel-outline-rounded:hover {
-		background-color: white;
+	.add-workouts > div {
+		width: 25%;
+		display: flex;
+		justify-content: space-between;
 	}
+
+	.add-workouts button {
+		width: 50%;
+	}
+
 
 </style>
