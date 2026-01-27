@@ -5,7 +5,7 @@
 	import { EXERCISE_CONTEXT }  from "$lib/contexts/exercise";
 	import { NUM_REQUESTED, WEBSITE_URL, WEEKDAYS } from "$lib/constants";
     import { workoutTemplates } from "$lib/templates.svelte";
-	// import { BatchUpdate } from "$lib/BatchUpdate";
+	import BatchUpdate from "$lib/BatchUpdate";
 
 	let templateModal = $state(false);
 	let description = $state("");
@@ -15,7 +15,7 @@
 	let workouts: WorkoutType[] = $state([]);
 	let exerciseNames: string[] = $state([]);
 
-	// let batchUpdate = BatchUpdate.getInstance();
+	let batchUpdate = BatchUpdate.getInstance();
 
 	setContext(EXERCISE_CONTEXT, {
 		exerciseNames,
@@ -46,9 +46,13 @@
 				name: "",
 				reps: [0],
 				weights: [0.0]
-			}]});
+			}]
+		});
 
-		// batchUpdate.log(weekday);
+		batchUpdate.addWorkout({
+			name: weekday,
+			date: date,
+		})
 	}
 
 	/**
@@ -62,6 +66,7 @@
 		});
 
 		try {
+
 			const res = await fetch(`${WEBSITE_URL}/workouts?${params}`, {
 				method: "GET",
 				headers: {
@@ -71,12 +76,13 @@
 			});
 
 			if (!res.ok) {
-				throw new Error("Request failed.");
+				let error = await res.json();
+                throw new Error(error.error || "Unknown API error");
 			}
 
 			await res.json()
 			.then(data => workoutDataExtraction(data)) 
-			.catch((reason) => console.log(reason));
+			.catch(reason => console.log(reason));
 
 		} catch (error) {
 			throw error;

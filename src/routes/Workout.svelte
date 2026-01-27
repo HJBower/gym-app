@@ -1,16 +1,28 @@
 <script lang="ts">
 
     import {Accordion, AccordionItem} from "flowbite-svelte";
-
     import Down from "@iconify-svelte/material-symbols/keyboard-double-arrow-down-rounded";
     import Up from "@iconify-svelte/material-symbols/chevron-line-up-rounded";
-
     import Exercise from "./Exercise.svelte";
+    import BatchUpdate from "$lib/BatchUpdate";
 
     let { workout = $bindable() } = $props();
 
+    let batchUpdate = BatchUpdate.getInstance();
+
     function addExercise() {
-        workout.exercises.push({name: "", reps: [0], weights: [0.0]});
+        workout.exercises.push({
+            name: "", 
+            reps: [0], 
+            weights: [0.0]
+        });
+        batchUpdate.addExercise({
+            name: "",
+            workout: {
+                name: workout.name,
+                date: new Date()
+            }
+        })
     }
 
     // function removeExercise(name: string) {
@@ -21,7 +33,7 @@
 
 
 <Accordion inactiveClass="bg-[var(--button-color-hover)]" activeClass="bg-[var(--button-color-default)]" class="border-0 divide-y-0">
-    <AccordionItem contentClass="bg-[var(--bg-color-secondary)] text-white">
+    <AccordionItem classes={{ content: "bg-[var(--bg-color-secondary)] text-white" }}>
         {#snippet header()}
             <div class="accordion-header">
                 <input type="text"

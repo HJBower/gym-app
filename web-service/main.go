@@ -15,7 +15,7 @@ import (
 )
 
 var users = map[string]string{
-	"me": "password123",
+	"myemail@test.com": "MyPassword123@",
 }
 
 // TODO: env variable
@@ -181,7 +181,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusSeeOther, gin.H{"token": signedToken})
+	c.JSON(http.StatusOK, gin.H{"token": signedToken})
 }
 
 func AuthJWT() gin.HandlerFunc {

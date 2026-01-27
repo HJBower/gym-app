@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { WEBSITE_URL } from "$lib/constants";
+    import { json } from '@sveltejs/kit';
 
     let user = $state("myemail@test.com");
     let pwd = $state("MyPassword123@");
@@ -32,13 +33,14 @@
 			})
 
             if (!res.ok) {
-                throw new Error("Request failed.");
+                let error = await res.json();
+                throw new Error(error.error || "Unknown API error");
             }
 
             // TODO: find more secure way to store jwt.
             await res.json()
-                .then((data) => localStorage.setItem("jwtToken", data.token))
-			    .catch((reason) => console.log(reason));
+            .then((data) => localStorage.setItem("jwtToken", data.token))
+			.catch((reason) => console.log(reason));
 
 		} catch (error) {
 			throw error;
