@@ -50,6 +50,7 @@
 		});
 
 		batchUpdate.addWorkout({
+			id: crypto.randomUUID(),
 			name: weekday,
 			date: date,
 		})

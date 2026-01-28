@@ -16,6 +16,7 @@
             reps: [0], 
             weights: [0.0]
         });
+        
         batchUpdate.addExercise({
             name: "",
             workout: {

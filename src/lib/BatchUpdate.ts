@@ -1,18 +1,52 @@
+import { idGenerator } from "flowbite-svelte";
+
+type ID = string;
+
+type WeightPerf = {
+    reps: number;
+    weight: number;
+}
+
 type Workout = {
+    id: ID;
+
     name: string;
     date: Date;
 }
 
 type Exercise = {
+    id: ID;
+    workoutId: ID;
+
     name: string;
-    workout: Workout;
+    index: number;
 }
 
 type PerfMeasure = {
-    reps: number;
-    weight: number;
+    id: ID;
+    exerciseId: ID;
+
+    weightPerf: WeightPerf;
     index: number;
-    exercise: Exercise;
+}
+
+
+type BatchPayload = {
+    workouts: {
+        add: Workout[];
+        remove: ID[];
+        update: { id: ID, name: string }[];
+    };
+    exercises: {
+        add: Exercise[];
+        remove: ID[];
+        update: { id: ID; name: string }[];
+    }
+    perfMeasrues: {
+        add: PerfMeasure[];
+        remove: ID[];
+        update: { id: ID; weightPerf: WeightPerf }[];
+    }
 }
 
 export default class BatchUpdate {
@@ -20,16 +54,16 @@ export default class BatchUpdate {
     private static instance: BatchUpdate;
     
     private workouts: Workout[] = [];
-    private revWorkouts: Workout[] = [];
-    private upWorkouts: Map<Workout, string> = new Map<Workout, string>();
+    private remWorkouts: ID[] = [];
+    private upWorkouts: Map<ID, string> = new Map<ID, string>();
 
     private exercises: Exercise[] = [];
-    private revExercises: Exercise[] = [];
-    private upExercises: Map<Exercise, string> = new Map<Exercise, string>();
+    private remExercises: ID[] = [];
+    private upExercises: Map<ID, string> = new Map<ID, string>();
 
     private perfMeasures: PerfMeasure[] = [];
-    private revPerfMeasure: PerfMeasure[] = [];
-    private upPerfMeasure: Map<PerfMeasure, string> = new Map<PerfMeasure, string>();
+    private remPerfMeasures: ID[] = [];
+    private upPerfMeasures: Map<ID, WeightPerf> = new Map<ID, WeightPerf>(); 
 
     private batching: boolean = false;
 
@@ -42,148 +76,88 @@ export default class BatchUpdate {
         return BatchUpdate.instance;
     }
 
-    /**
-     * Add a workout.
-     * 
-     * @param workout Workout to add.
-     */
-    public addWorkout(workout: Workout): void {
-        this.startLogs();
+    public addWorkout(workout: Workout) {
+        this.startCollection();
         this.workouts.push(workout);
     }
 
-
-    /**
-     * Remove a workout. An attempt is made to remove the workout that
-     * is currently in memory. Else, it is added to a seperate
-     * list of workouts to remove from the database.
-     * 
-     * @param workout Workout to remove.
-     */
-    public removeWorkout(workout: Workout): void {
-        this.startLogs();
-
-        let lenBefore = this.workouts.length;
-        this.workouts = this.workouts.filter((w) =>
-            w.name != workout.name || 
-            w.date != workout.date
-        );
-
-        if (lenBefore == this.workouts.length) {
-            this.revWorkouts.push(workout);
-        }
-
-        this.exercises = this.exercises.filter((e) => 
-            e.workout.name != workout.name || 
-            e.workout.date != workout.date
-        )
-
-        this.perfMeasures = this.perfMeasures.filter((p) =>
-            p.exercise.workout.name != workout.name || 
-            p.exercise.workout.date != workout.date
-        )
+    public removeWorkout(workoutId: ID) {
+        this.startCollection();
+        this.remWorkouts.push(workoutId);
     }
 
-    /**
-     * Update the name of a workout. An attempt is made to
-     * update the workout that is currently in memory. Else,
-     * the new name is added to a seperate map of workouts
-     * and new names to update the database.
-     * 
-     * @param name New name for workout.
-     * @param workout Workout to update.
-     */
-    // public updateWorkoutName(name: string, workout: Workout) {
-    //     this.startLogs();
-
-    //     let found = false;
-    //     this.workouts.forEach((w) => {
-    //         if (w.name == workout.name && w.date == workout.date) {
-    //             found = true;
-    //             w.name = name;
-    //         }
-    //     })
-
-    //     if (!found) {
-    //         this.upWorkouts.set(workout, name);
-    //     }
-    // }
+    public updateWorkoutName(name: string, workoutId: ID) {
+        this.startCollection();
+        this.upWorkouts.set(workoutId, name);
+    }
 
     public addExercise(exercise: Exercise) {
-        this.startLogs();
+        this.startCollection();
         this.exercises.push(exercise);
     }
 
-    public removeExercise(exercise: Exercise) {
-        this.startLogs();
+    public removeExercise(exerciseId: ID) {
+        this.startCollection();
+        this.remExercises.push(exerciseId);
+    }
 
-        let lenBefore = this.exercises.length;
-        this.exercises = this.exercises.filter((e) => 
-            e.name != exercise.name || 
-            e.workout.name != exercise.workout.name ||
-            e.workout.date != exercise.workout.date
-        );
-
-        if (lenBefore == this.exercises.length) {
-            this.revExercises.push(exercise);
-        }
-
-        this.perfMeasures = this.perfMeasures.filter((p) =>
-            p.exercise.name != exercise.name ||
-            p.exercise.workout.name != exercise.workout.name || 
-            p.exercise.workout.date != exercise.workout.date
-        )
+    public updateExerciseName(name: string, exerciseId: ID) {
+        this.startCollection();
+        this.upExercises.set(exerciseId, name);
     }
 
     public addPerfMeasure(perfMeasure: PerfMeasure) {
-        this.startLogs();
-        this.addPerfMeasure(perfMeasure);
+        this.startCollection();
+        this.perfMeasures.push(perfMeasure);
+    }   
+
+    public removePerfMeasure(perfMeasureId: ID) {
+        this.startCollection();
+        this.remPerfMeasures.push(perfMeasureId);
     }
 
-    public removePerfmeasure(perfMeasure: PerfMeasure) {
-        this.startLogs();
-
-        let lenBefore = this.perfMeasures.length;
-        this.perfMeasures = this.perfMeasures.filter((p) => p.index != perfMeasure.index || 
-            p.exercise.name != perfMeasure.exercise.name ||
-            p.exercise.workout.name != perfMeasure.exercise.workout.name ||
-            p.exercise.workout.date != perfMeasure.exercise.workout.date 
-        );
-
-        if (lenBefore == this.perfMeasures.length) {
-            this.revPerfMeasure.push(perfMeasure);
-        }
+    public updatePerfMeasure(weightPerf: WeightPerf, perfMeasureId: ID) {
+        this.startCollection();
+        this.upPerfMeasures.set(perfMeasureId, weightPerf);
     }
 
-
-    private startLogs(): void {
+    private startCollection(): void {
         if (!this.batching) {
-			setTimeout(() => this.printLogs(), 5000);
+			setTimeout(() => this.sendCollection(), 5000);
 			this.batching = true;
 		}
     }
 
-    private printLogs() {
-        for (const perfMeasure of this.perfMeasures) {
-            console.log(perfMeasure);
+    private sendCollection() {
+
+        const payload: BatchPayload = {
+            workouts: {
+                add: this.workouts,
+                remove: this.remWorkouts,
+                update: [...this.upWorkouts.entries()].map(([id, name]) => ({
+                    id,
+                    name
+                }))
+            },
+            exercises: {
+                add: this.exercises,
+                remove: this.remExercises,
+                update: [...this.upExercises.entries()].map(([id, name]) => ({
+                    id,
+                    name
+                }))
+            },
+            perfMeasrues: {
+                add: this.perfMeasures,
+                remove: this.remExercises,
+                update: [...this.upPerfMeasures.entries()].map(([id, weightPerf]) => ({
+                    id,
+                    weightPerf
+                }))
+            }
         }
 
-        for (const exercise of this.exercises) {
-            console.log(exercise);
-        }
-
-        for (const workout of this.workouts) {
-            console.log(workout);
-        }
-
-        this.workouts = [];
-        this.revWorkouts = [];
-
-        this.exercises = [];
-        this.revExercises = [];
-
-        this.perfMeasures = [];
-        this.revPerfMeasure = [];
+        console.log(payload)
 
         this.batching = false;        
     }
