@@ -1,51 +1,18 @@
-import { idGenerator } from "flowbite-svelte";
-
-type ID = string;
-
-type WeightPerf = {
-    reps: number;
-    weight: number;
-}
-
-type Workout = {
-    id: ID;
-
-    name: string;
-    date: Date;
-}
-
-type Exercise = {
-    id: ID;
-    workoutId: ID;
-
-    name: string;
-    index: number;
-}
-
-type PerfMeasure = {
-    id: ID;
-    exerciseId: ID;
-
-    weightPerf: WeightPerf;
-    index: number;
-}
-
-
 type BatchPayload = {
     workouts: {
-        add: Workout[];
+        add: WorkoutT[];
         remove: ID[];
         update: { id: ID, name: string }[];
     };
     exercises: {
-        add: Exercise[];
+        add: ExerciseT[];
         remove: ID[];
         update: { id: ID; name: string }[];
     }
     perfMeasrues: {
-        add: PerfMeasure[];
+        add: PerfMeasureT[];
         remove: ID[];
-        update: { id: ID; weightPerf: WeightPerf }[];
+        update: { id: ID; weightPerf: WeightPerfT }[];
     }
 }
 

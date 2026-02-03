@@ -1,58 +1,93 @@
 <script lang="ts">
 
-    import {Accordion, AccordionItem} from "flowbite-svelte";
+    import { getContext } from "svelte";
+    import { Accordion, AccordionItem } from "flowbite-svelte";
     import Down from "@iconify-svelte/material-symbols/keyboard-double-arrow-down-rounded";
     import Up from "@iconify-svelte/material-symbols/chevron-line-up-rounded";
     import Exercise from "./Exercise.svelte";
     import BatchUpdate from "$lib/BatchUpdate";
+    import { DATA, type WorkoutData } from "$lib/contexts/data";
 
-    let { workout = $bindable() } = $props();
+    const workoutData = getContext<WorkoutData>(DATA);
+    let { workoutId } = $props();
+    let workout = $derived.by(() => {
+        
+        const workout = workoutData.workouts.get(workoutId);
+        if (!workout) return null;
+
+        const exercise = [...workoutData.exercises.values()]
+            .filter(e => e.workoutId == workoutId)
+            .sort((a, b) => b.index - a.index);
+
+        return {...workout, exercise};
+    });
+
+    let name = $state("");
+    function updateName() {
+        if (!workout) return;
+        batchUpdate.updateWorkoutName(name, workoutId);
+    }
+    $effect(() => {
+        name = workout?.name ?? "None";
+    })
 
     let batchUpdate = BatchUpdate.getInstance();
 
-    function addExercise() {
-        workout.exercises.push({
-            name: "", 
-            reps: [0], 
-            weights: [0.0]
-        });
-        
-        batchUpdate.addExercise({
-            name: "",
-            workout: {
-                name: workout.name,
-                date: new Date()
-            }
-        })
+    function calcDisplayDate() {
+
+        if (!workout) {
+            console.log("Error in displaying date");
+            return "dd\\mm\\yy";
+        }
+
+        let date: string = workout.date;
+        date = date.substring(0, 10);
+
+        let parts = date.split("-");
+
+        if (parts.length < 3) {
+            console.log("Error in displaying date");
+            return "dd\\mm\\yy";
+        }
+
+        return `${parts[2]}\\${parts[1]}\\${parts[0]}`;
     }
 
-    // function removeExercise(name: string) {
-    //     workout.exercises.filter(exercise => exercise.name != name);
-    // }
+    function addExercise() {
+        let exercise: ExerciseT = {
+            id: crypto.randomUUID(),
+            workoutId: workoutId,
+            name: "",
+            index: workoutData.workouts.size + 1,
+        }
+
+        workoutData.setExercise(exercise);
+        batchUpdate.addExercise(exercise);
+    }
 
 </script>
-
 
 <Accordion inactiveClass="bg-[var(--button-color-hover)]" activeClass="bg-[var(--button-color-default)]" class="border-0 divide-y-0">
     <AccordionItem classes={{ content: "bg-[var(--bg-color-secondary)] text-white" }}>
         {#snippet header()}
             <div class="accordion-header">
                 <input type="text"
-                    bind:value={workout.name} 
+                    bind:value={name} 
+                    onblur={updateName}
                     onclick={(e) => (e.stopPropagation())}
                     onkeydown={(e) => (e.stopPropagation())}
                 />
-                <div class="text-sm">{workout.date}</div>
+                <div class="text-sm">{calcDisplayDate()}</div>
             </div>    
         {/snippet}
         {#snippet arrowup()}<Up width=1.25rem height=1.25rem/>{/snippet}
         {#snippet arrowdown()}<Down width=1.25rem height=1.25rem/>{/snippet}
         
-            {#if workout.exercises.length > 0}
+            {#if workout}
                 <ul >
-                    {#each workout.exercises as _, i}
+                    {#each workout.exercise as e}
                         <li>
-                            <Exercise bind:exercise={workout.exercises[i]} />
+                            <Exercise exerciseId={e.id} />
                         </li>
                     {/each}
                 </ul>

@@ -1,18 +1,27 @@
 <script lang="ts">
-    import { onMount, setContext } from "svelte";
+	
+    import { getContext, onMount, setContext } from "svelte";
     import Workout from "./Workout.svelte";
 	import { Modal } from "flowbite-svelte";
 	import { EXERCISE_CONTEXT }  from "$lib/contexts/exercise";
 	import { NUM_REQUESTED, WEBSITE_URL, WEEKDAYS } from "$lib/constants";
     import { workoutTemplates } from "$lib/templates.svelte";
 	import BatchUpdate from "$lib/BatchUpdate";
+    import { DATA, type WorkoutData } from "$lib/contexts/data";
+
+	const workoutData = getContext<WorkoutData>(DATA);
+	let sortedWorkouts = $derived.by(() => {
+		return workoutData.workouts
+			.values()
+			.toArray()
+			.sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+	})
+
 
 	let templateModal = $state(false);
 	let description = $state("");
 
 	let searchTerm = $state("");
-
-	let workouts: WorkoutType[] = $state([]);
 	let exerciseNames: string[] = $state([]);
 
 	let batchUpdate = BatchUpdate.getInstance();
@@ -35,25 +44,14 @@
 		let date = new Date();
 		let weekday = WEEKDAYS[date.getDay()];
 
-		const dd: string = (date.getDate() < 10) ? "0" + date.getDate() : date.getDate().toString();
-		const mm: string = (date.getMonth() + 1 < 10) ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1).toString();
-		const yy: string = date.getFullYear().toString();
-
-		workouts.push({
-			name: weekday,
-			date: `${dd}/${mm}/${yy}`,
-			exercises: [{
-				name: "",
-				reps: [0],
-				weights: [0.0]
-			}]
-		});
-
-		batchUpdate.addWorkout({
+		let workout = {
 			id: crypto.randomUUID(),
 			name: weekday,
-			date: date,
-		})
+			date: date.toISOString(),
+		}
+
+		workoutData.setWorkout(workout);
+		batchUpdate.addWorkout(workout);
 	}
 
 	/**
@@ -82,8 +80,8 @@
 			}
 
 			await res.json()
-			.then(data => workoutDataExtraction(data)) 
-			.catch(reason => console.log(reason));
+				.then(data => dataExtract(data)) 
+				.catch(reason => console.log(reason));
 
 		} catch (error) {
 			throw error;
@@ -95,45 +93,38 @@
 	*/
 	onMount(() => getWorkouts(NUM_REQUESTED));
 
-	function workoutDataExtraction(workoutData: any) {
+	function dataExtract(data: WorkoutDataT) {
 
-		/**
-		 * Temporary solution to extract exercise names to create exercise list
-		 * for when adding exercises. It might be better to later have the exercise list
-		 * sent by the server in either a seperate request or in the initial fetch data.
-		*/
-		let names: Set<string> = new Set([]);
-		for (let i = 0; i < workoutData.length; i++) {
-			let workout = workoutData[i];
-			
-			for (let j = 0; j < workout.exercises.length; j++) {
-				names.add(workout.exercises[j].name);
-			}
+		for (let w of data.workouts) {
+			workoutData.setWorkout(w);
 		}
 
-		exerciseNames.push(...names);
+		for (let e of data.exercises) {
+			workoutData.setExercise(e);
+		}
 
-		// Mutate the workout array and not reassign or reactivity breaks
-		workouts.splice(workouts.length, 0, ...workoutData);
-	}
-
-	async function sendWorkouts() {
-
-		try {
-			await fetch(`${WEBSITE_URL}/workouts`, {
-				method: "POST",
-				body: JSON.stringify(workouts),
-				headers: {
-					"Content-type": "application/json charset=UTF-8"
-				}
-			})
-			.then((success) => console.log(success))
-			.catch((reason) => console.log(reason))
-
-		} catch (error) {
-			throw error;
+		for (let p of data.perfMeasures) {
+			workoutData.setPerfMeasure(p);
 		}
 	}
+
+	// async function sendWorkouts() {
+
+	// 	try {
+	// 		await fetch(`${WEBSITE_URL}/workouts`, {
+	// 			method: "POST",
+	// 			body: JSON.stringify(workouts),
+	// 			headers: {
+	// 				"Content-type": "application/json charset=UTF-8"
+	// 			}
+	// 		})
+	// 		.then((success) => console.log(success))
+	// 		.catch((reason) => console.log(reason))
+
+	// 	} catch (error) {
+	// 		throw error;
+	// 	}
+	// }
 
 
 	function addTemplateWorkout(templateName: string) {
@@ -169,7 +160,7 @@
 		}
 	}
 
-	function createDescription(template: WorkoutTemplateType) {
+	function createDescription(template: WorkoutTemplateT) {
 		let name = template.name;
 
 		let descrip: string = "";
@@ -214,8 +205,6 @@
 				effortMeasure: weightEffort
 			})
 		}
-
-		console.log(searchEntries);
 
 		return searchEntries;
 	}
@@ -263,9 +252,9 @@
 	{#if searchTerm === ""}
 		<!-- List of workouts -->
 		<ul>
-			{#each workouts as _, i}
+			{#each sortedWorkouts as w}
 				<li class="p-4">
-					<Workout bind:workout={workouts[workouts.length - 1 - i]}/>
+					<Workout workoutId={w.id}/>
 				</li>
 			{/each}
 		</ul>
@@ -273,18 +262,11 @@
 		<ul>
 			{#each search() as entry}
 				<li>
-					<p>Hello</p>
+					<p>Temporary</p>
 				</li>	
 			{/each}
 		</ul>
 	{/if}
-
-	<p>{JSON.stringify(workouts, null, 2)}</p>
-	<p>{exerciseNames}</p>
-
-	<div class="data">
-		<button class="bg-amber-300" onclick={sendWorkouts}>Send Data</button>
-	</div>
 
 </div>
 

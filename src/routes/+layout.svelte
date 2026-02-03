@@ -2,7 +2,13 @@
 	import Header from './Header.svelte';
 	import './layout.css';
 	import '../lib/styles/global.css';
+    import { createWorkoutData } from '$lib/workoutData.svelte';
+    import { setContext } from 'svelte';
+    import { DATA, type WorkoutData } from '$lib/contexts/data';
 	
+	const workoutData = createWorkoutData();
+	setContext<WorkoutData>(DATA, workoutData);
+
 	let { children } = $props();
 </script>
 

@@ -39,13 +39,13 @@ func main() {
 		* 	Get and set the workouts.
 		 */
 		auth.GET("/workouts", GetWorkouts)
-		auth.POST("/workouts", SetWorkouts)
+		// auth.POST("/workouts", SetWorkouts)
 
 		/**
 		* 	Get and set the workout templates.
 		 */
-		auth.GET("/templates", GetTemplates)
-		auth.POST("/templates", SetTemplates)
+		// auth.GET("/templates", GetTemplates)
+		// auth.POST("/templates", SetTemplates)
 	}
 
 	router.Run("localhost:8081")
@@ -65,59 +65,59 @@ func GetWorkouts(c *gin.Context) {
 		return
 	}
 
-	if val > int64(len(Workouts)) {
-		val = int64(len(Workouts))
+	if val > int64(len(MyData.Exercises)) {
+		val = int64(len(MyData.Exercises))
 	}
 
-	c.JSON(http.StatusOK, Workouts[0:val])
+	c.JSON(http.StatusOK, MyData)
 }
 
-func SetWorkouts(c *gin.Context) {
+// func SetWorkouts(c *gin.Context) {
 
-	var newWorkouts []Workout
-	if err := c.ShouldBindJSON(&newWorkouts); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON for new workouts"})
-		return
-	}
+// 	var newWorkouts []Workout
+// 	if err := c.ShouldBindJSON(&newWorkouts); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON for new workouts"})
+// 		return
+// 	}
 
-	Workouts = newWorkouts
+// 	Workouts = newWorkouts
 
-	c.JSON(http.StatusAccepted, gin.H{"accepted": "Workouts accepted"})
-}
+// 	c.JSON(http.StatusAccepted, gin.H{"accepted": "Workouts accepted"})
+// }
 
-func GetTemplates(c *gin.Context) {
-	count, exists := c.GetQuery("count")
+// func GetTemplates(c *gin.Context) {
+// 	count, exists := c.GetQuery("count")
 
-	if !exists {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Value is required"})
-		return
-	}
+// 	if !exists {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Value is required"})
+// 		return
+// 	}
 
-	val, err := strconv.ParseInt(count, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Count not in valid format"})
-		return
-	}
+// 	val, err := strconv.ParseInt(count, 10, 64)
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Count not in valid format"})
+// 		return
+// 	}
 
-	if val > int64(len(WorkoutTemplates)) {
-		val = int64(len(WorkoutTemplates))
-	}
+// 	if val > int64(len(WorkoutTemplates)) {
+// 		val = int64(len(WorkoutTemplates))
+// 	}
 
-	c.JSON(http.StatusOK, WorkoutTemplates[0:val])
-}
+// 	c.JSON(http.StatusOK, WorkoutTemplates[0:val])
+// }
 
-func SetTemplates(c *gin.Context) {
+// func SetTemplates(c *gin.Context) {
 
-	var newWorkoutTemplates []WorkoutTemplate
-	if err := c.ShouldBindJSON(&newWorkoutTemplates); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON for new workout templates"})
-		return
-	}
+// 	var newWorkoutTemplates []WorkoutTemplate
+// 	if err := c.ShouldBindJSON(&newWorkoutTemplates); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON for new workout templates"})
+// 		return
+// 	}
 
-	WorkoutTemplates = newWorkoutTemplates
+// 	WorkoutTemplates = newWorkoutTemplates
 
-	c.JSON(http.StatusAccepted, gin.H{"accepted": "Workout templates accepted"})
-}
+// 	c.JSON(http.StatusAccepted, gin.H{"accepted": "Workout templates accepted"})
+// }
 
 func Signup(c *gin.Context) {
 

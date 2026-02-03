@@ -3,28 +3,48 @@
     import { Modal } from "flowbite-svelte";
     import { EXERCISE_CONTEXT, type ExerciseContext }  from "$lib/contexts/exercise";
     import { getContext } from "svelte";
+    import { DATA, type WorkoutData } from "$lib/contexts/data";
+
+	const workoutData = getContext<WorkoutData>(DATA);
 
     const { exerciseNames, addExerciseName } = getContext<ExerciseContext>(EXERCISE_CONTEXT);
 
-    let { exercise = $bindable() } = $props();
+    let { exerciseId } = $props<{ exerciseId: ID }>();
+
+    let exercise = $derived.by(() => {
+        return workoutData.exercises.get(exerciseId);
+    });
+
+    let perfMeasure = $derived.by(() => {
+        return [...workoutData.perfMeasures.values()]
+            .find(p => p.exerciseId == exerciseId);
+    })
+
+    let name = $state("");
+    $effect(() => {
+        name = exercise?.name ?? "None";
+    })
+    function updateName() {
+        if (!exercise) return;
+    }
 
     let defaultModal = $state(false);
     let deleteModal = $state(false);
 
     let display = $state(false);
 
-    let filteredNames = $derived(
-        exerciseNames.filter((name: string) => 
-            name.toLowerCase().includes(exercise.name.toLowerCase())));
+    // let filteredNames = $derived(
+    //     exerciseNames.filter((name: string) => 
+    //         name.toLowerCase().includes(exercise.name.toLowerCase())));
 
-    function addSet() {
-        exercise.reps.push(0);
-        exercise.weights.push(0);
+    function addSet(pm: WeightPerfT | undefined) {
+        if (!pm) return;
+        workoutData.addToPerfMeasure(pm);
     }
 
-    function removeSet() {
-        exercise.reps.pop();
-        exercise.weights.pop();
+    function removeSet(pm: WeightPerfT | undefined) {
+        if (!pm) return;
+        workoutData.removeFromPerfMeasure(pm);
     }
 
     let setList: HTMLUListElement;
@@ -58,11 +78,15 @@
         });
     }
 
-    function blur() {
-        display = false;
-        addExerciseName(exercise.name);
-    }
+    // function blur() {
+    //     display = false;
+    //     addExerciseName(exercise.name);
+    // }
 
+    // function zip<Type>(a: Type[], b: Type[]): Type[][] {
+    //     if (a.length !== b.length) return [[]];
+    //     return a.map((element, index) => [element, b[index]]);
+    // }
 
 </script>
 
@@ -72,19 +96,19 @@
         <!-- Area with the input content -->
         <div id="text-input-area" class="exercise-name-area">
             <button id="input-area-button" class="vert-dots" aria-label="Exercise settings" onclick={() => (defaultModal = true)} ></button>
-            <input type="text" required placeholder="Exercise..." class="exercise" bind:value={exercise.name} onfocus={() => display = true} onblur={blur}/>
+            <input type="text" required placeholder="Exercise..." class="exercise" bind:value={name} onfocus={() => display = true} onblur={blur}/>
         </div>
 
         <!-- Two operation buttons -->
-        <button aria-label="Remove set" onclick={removeSet} class="exercise-operation-button">
+        <button aria-label="Remove set" onclick={() => removeSet(perfMeasure)} class="exercise-operation-button">
             <span class="minus"></span>
         </button>
-        <button aria-label="Add set" onclick={addSet} class="exercise-operation-button">
+        <button aria-label="Add set" onclick={() => addSet(perfMeasure)} class="exercise-operation-button">
             <span class="plus"></span>
         </button>
 
         <!-- Dropdown list-->
-        <div class="dropdown-content" data-display={display}>
+        <!-- <div class="dropdown-content" data-display={display}>
             <ul>
                 {#if filteredNames.length > 0}
                     {#each filteredNames as item}
@@ -94,7 +118,7 @@
                     {/each}
                 {/if}
             </ul>
-        </div>
+        </div> -->
 
     </div>
     
@@ -111,14 +135,16 @@
 
         <!-- List with sets -->
         <ul bind:this={setList}>
-            {#each Array.from({length: exercise.reps.length}) as _, i}
-                <li>
-                    <div class="set-values">
-                        <input type="number" min=0 max=999 maxlength="3" bind:value={exercise.weights[i]}/> 
-                        <input type="number" min=0 max=999 maxlength="3" bind:value={exercise.reps[i]}/>
-                    </div>
-                </li>
-            {/each}
+            {#if perfMeasure}
+                {#each perfMeasure?.reps as _, index}
+                    <li>
+                        <div class="set-values">
+                            <input type="number" min=0 max=999 maxlength="3" bind:value={perfMeasure.weight[index]}/> 
+                            <input type="number" min=0 max=999 maxlength="3" bind:value={perfMeasure.reps[index]}/>
+                        </div>
+                    </li>
+                {/each}
+            {/if}
         </ul>
 
         <button aria-label="Go right" onclick={scrollRight}>

@@ -9,37 +9,48 @@ declare global {
 		// interface Platform {}
 	}
 
-	type ExerciseType = {
-		name: string;
-		reps: number[];
-		weights: number[];
-	}
+	type ID = string;
 
-	type WorkoutType = {
+	type WorkoutT = {
+		id: ID;
 		name: string;
 		date: string;
-		exercises: ExerciseType[];
 	}
 
-	type ExerciseTemplateType = {
+	type ExerciseT = {
+		id: ID;
+		workoutId: ID;
 		name: string;
-		sets: number;
+		index: number;
 	}
 
-	type WorkoutTemplateType = {
-		name: string;
-		exercises: ExerciseTemplateType[];
+	type WeightPerfT = {
+		id: ID;
+		exerciseId: ID;
+		reps: number[];
+		weight: number[];
 	}
 
-	type SearchEntryType = {
+	type WorkoutDataT = {
+		workouts: WorkoutT[];
+		exercises: ExerciseT[];   
+		perfMeasures: WeightPerfT[]; 
+	}
+
+	type SearchEntryT = {
 		name: string;
 		dates: string[];
 		effortMeasure: WeightEffortType[]; 
 	}
 
-	type WeightEffortType = {
-		reps: number[];
-		weights: number[];
+	type ExerciseTemplateT = {
+		name: string;
+		sets: number;
+	}
+
+	type WorkoutTemplateT = {
+		name: string;
+		exercises: ExerciseTemplateT[];
 	}
 }
 

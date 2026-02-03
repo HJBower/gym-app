@@ -10,59 +10,88 @@ type ExerciseTemplate struct {
 	Sets int8   `json:"sets"`
 }
 
+type WorkoutData struct {
+	Workouts     []Workout    `json:"workouts"`
+	Exercises    []Exercise   `json:"exercises"`
+	PerfMeasures []WeightPerf `json:"perfMeasures"`
+}
+
 type Workout struct {
-	Name      string     `json:"name"`
-	Date      string     `json:"date"`
-	Exercises []Exercise `json:"exercises"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Date string `json:"date"`
 }
 
 type Exercise struct {
-	Name    string    `json:"name"`
-	Reps    []int8    `json:"reps"`
-	Weights []float32 `json:"weights"`
+	ID        string `json:"id"`
+	WorkoutID string `json:"workoutId"`
+	Name      string `json:"name"`
+	Index     uint16 `json:"index"`
+}
+
+type WeightPerf struct {
+	ID         string    `json:"id"`
+	ExerciseID string    `json:"exerciseId"`
+	Reps       []uint16  `json:"reps"`
+	Weight     []float32 `json:"weight"`
+}
+
+var workout1 = Workout{
+	ID:   "xxxx-xxxx-xxxx",
+	Name: "Friday Chest Session",
+	Date: "2026-01-01T12:30:00.000Z",
+}
+
+var workout2 = Workout{
+	ID:   "yyyy-yyyy-yyyy",
+	Name: "Thursday Leg Session",
+	Date: "2026-01-02T12:30:00.000Z",
 }
 
 var exercise1 = Exercise{
-	Name:    "Bench Press",
-	Reps:    []int8{12, 12, 12, 12},
-	Weights: []float32{30.0, 50.0, 60.0, 65.0},
+	ID:        "aa-aa",
+	WorkoutID: "xxxx-xxxx-xxxx",
+	Name:      "Bench Press",
+	Index:     1,
 }
 
 var exercise2 = Exercise{
-	Name:    "Bicep Curl",
-	Reps:    []int8{12, 12, 12, 12},
-	Weights: []float32{30.0, 50.0, 60.0, 65.0},
+	ID:        "bb-bb",
+	WorkoutID: "xxxx-xxxx-xxxx",
+	Name:      "Tricep Pushdowns",
+	Index:     2,
 }
 
 var exercise3 = Exercise{
-	Name:    "Squat",
-	Reps:    []int8{12, 12, 12, 12},
-	Weights: []float32{30.0, 50.0, 60.0, 65.0},
+	ID:        "cc-cc",
+	WorkoutID: "yyyy-yyyy-yyyy",
+	Name:      "Squats",
+	Index:     1,
 }
 
-var Workouts = []Workout{
-	{
-		Name:      "Friday Chest Session",
-		Date:      "01/01/2026",
-		Exercises: []Exercise{exercise1, exercise2}},
-	{
-		Name:      "Thursday Leg Session",
-		Date:      "01/02/2026",
-		Exercises: []Exercise{exercise3}},
+var perfMeasure1 = WeightPerf{
+	ID:         "a",
+	ExerciseID: "aa-aa",
+	Reps:       []uint16{12, 12, 12},
+	Weight:     []float32{30, 30, 30},
 }
 
-var WorkoutTemplates = []WorkoutTemplate{
-	{
-		Name: "Chest Day",
-		Exercises: []ExerciseTemplate{
-			{Name: "Bench", Sets: 4},
-		},
-	},
-	{
-		Name: "Leg Day",
-		Exercises: []ExerciseTemplate{
-			{Name: "Squat", Sets: 4},
-			{Name: "Leg Press", Sets: 3},
-		},
-	},
+var perfMeasure2 = WeightPerf{
+	ID:         "b",
+	ExerciseID: "aa-aa",
+	Reps:       []uint16{12, 12, 12},
+	Weight:     []float32{30, 30, 30},
+}
+
+var perfMeasure3 = WeightPerf{
+	ID:         "c",
+	ExerciseID: "bb-bb",
+	Reps:       []uint16{12, 12, 12},
+	Weight:     []float32{30, 30, 30},
+}
+
+var MyData = WorkoutData{
+	Workouts:     []Workout{workout1, workout2},
+	Exercises:    []Exercise{exercise1, exercise2, exercise3},
+	PerfMeasures: []WeightPerf{perfMeasure1, perfMeasure2, perfMeasure3},
 }
