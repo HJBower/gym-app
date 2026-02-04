@@ -8,6 +8,7 @@
     import { workoutTemplates } from "$lib/templates.svelte";
 	import BatchUpdate from "$lib/BatchUpdate";
     import { DATA, type WorkoutData } from "$lib/contexts/data";
+    import Exercise from "./Exercise.svelte";
 
 	const workoutData = getContext<WorkoutData>(DATA);
 	let sortedWorkouts = $derived.by(() => {
@@ -44,13 +45,30 @@
 		let date = new Date();
 		let weekday = WEEKDAYS[date.getDay()];
 
-		let workout = {
+		let workout: WorkoutT = {
 			id: crypto.randomUUID(),
 			name: weekday,
 			date: date.toISOString(),
 		}
 
+		let exercise: ExerciseT = {
+			id: crypto.randomUUID(),
+			workoutId: workout.id,
+			name: "",
+			index: 1,
+		}
+
+		let perfMeasure: WeightPerfT = {
+			id: crypto.randomUUID(),
+			exerciseId: exercise.id,
+			reps: [0],
+			weight: [0],
+		}
+
 		workoutData.setWorkout(workout);
+		workoutData.setExercise(exercise);
+		workoutData.setPerfMeasure(perfMeasure);
+
 		batchUpdate.addWorkout(workout);
 	}
 
@@ -268,9 +286,22 @@
 		</ul>
 	{/if}
 
+	{#each workoutData.workouts.values() as entry}
+		<p>{JSON.stringify(entry)}</p>
+	{/each}
+	{#each workoutData.exercises.values() as entry}
+		<p>{JSON.stringify(entry)}</p>
+	{/each}
+	{#each workoutData.perfMeasures.values() as entry}
+		<p>{JSON.stringify(entry)}</p>
+	{/each}
 </div>
 
 <style>
+
+	p {
+		color: peru;
+	}
 
 	/**
 	 * Search bar. 

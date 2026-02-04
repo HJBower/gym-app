@@ -26,6 +26,7 @@
     })
     function updateName() {
         if (!exercise) return;
+        workoutData.setExercise({...exercise, name: name});
     }
 
     let defaultModal = $state(false);
@@ -78,15 +79,31 @@
         });
     }
 
-    // function blur() {
-    //     display = false;
-    //     addExerciseName(exercise.name);
-    // }
+    function updateReps(id: string, index: number, value: number) {
+        const current = workoutData.perfMeasures.get(id);
+        if (!current) return;
 
-    // function zip<Type>(a: Type[], b: Type[]): Type[][] {
-    //     if (a.length !== b.length) return [[]];
-    //     return a.map((element, index) => [element, b[index]]);
-    // }
+        const reps = [...current.reps];
+        reps[index] = value;
+
+        workoutData.perfMeasures.set(id, {
+            ...current,
+            reps
+        });
+    }
+
+    function updateWeight(id: string, index: number, value: number) {
+        const current = workoutData.perfMeasures.get(id);
+        if (!current) return;
+
+        const weight = [...current.weight];
+        weight[index] = value;
+
+        workoutData.perfMeasures.set(id, {
+            ...current,
+            weight
+        });
+    }
 
 </script>
 
@@ -96,7 +113,7 @@
         <!-- Area with the input content -->
         <div id="text-input-area" class="exercise-name-area">
             <button id="input-area-button" class="vert-dots" aria-label="Exercise settings" onclick={() => (defaultModal = true)} ></button>
-            <input type="text" required placeholder="Exercise..." class="exercise" bind:value={name} onfocus={() => display = true} onblur={blur}/>
+            <input type="text" required placeholder="Exercise..." class="exercise" bind:value={name} onfocus={() => display = true} onblur={updateName}/>
         </div>
 
         <!-- Two operation buttons -->
@@ -139,8 +156,16 @@
                 {#each perfMeasure?.reps as _, index}
                     <li>
                         <div class="set-values">
-                            <input type="number" min=0 max=999 maxlength="3" bind:value={perfMeasure.weight[index]}/> 
-                            <input type="number" min=0 max=999 maxlength="3" bind:value={perfMeasure.reps[index]}/>
+                            <input type="number" min=0 max=999 maxlength="3" value={perfMeasure.weight[index]} oninput={(e) => {
+                                const value = e.currentTarget.valueAsNumber;
+                                if (Number.isNaN(value)) return;
+                                updateWeight(perfMeasure.id, index, value)}
+                            }/> 
+                            <input type="number" min=0 max=999 maxlength="3" value={perfMeasure.reps[index]} oninput={(e) => {
+                                const value = e.currentTarget.valueAsNumber;
+                                if (Number.isNaN(value)) return;
+                                updateReps(perfMeasure.id, index, value)}
+                            }/>
                         </div>
                     </li>
                 {/each}
@@ -235,13 +260,15 @@
     }
 
     .exercise-name-area > input {
-        padding: 0;
+        padding: 0 0.5rem 0 0;
 
         background-color: transparent;
         border-style: none;
 
         min-width: 2em;
-        max-width: 8em;
+        max-width: 12em;
+
+        text-overflow: ellipsis;
     }
 
     .exercise-name-area > input::placeholder {

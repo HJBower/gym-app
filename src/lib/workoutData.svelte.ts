@@ -14,36 +14,35 @@ export function createWorkoutData() {
     }
 
     function addToPerfMeasure(pm: WeightPerfT) {
-        let perfMeasure = perfMeasures.get(pm.id);
-        if (!perfMeasure) return;
+        let current = perfMeasures.get(pm.id);
+        if (!current) return;
 
-        perfMeasure.reps.push(0);
-        perfMeasure.weight.push(0);
-
-        perfMeasures.set(pm.id, perfMeasure);
+        perfMeasures.set(pm.id, {
+            ...current,
+            reps: [...current.reps, 0],
+            weight: [...current.weight, 0],
+        });
     }
 
     function removeFromPerfMeasure(pm: WeightPerfT) {
-        perfMeasures.set("xxx", pm)
-        let perfMeasure = perfMeasures.get(pm.id);
-        if (!perfMeasure) return;
+        let current = perfMeasures.get(pm.id);
+        if (!current) return;
 
-        perfMeasure.reps.pop();
-        perfMeasure.weight.pop();
+        current.reps.pop();
+        let reps = current.reps;
 
-        perfMeasures.set(pm.id, perfMeasure);
+        current.weight.pop();
+        let weight = current.weight;
+
+        perfMeasures.set(pm.id, {
+            ...current,
+            reps: reps,
+            weight: weight
+        });
     }
 
     function setPerfMeasure(pm: WeightPerfT) {
         perfMeasures.set(pm.id, pm);
-    }
-
-    function setWeight(pm: WeightPerfT, index: number, w: number) {
-        let perfMeasure = perfMeasures.get(pm.id);
-        if (!perfMeasure) return;
-
-        perfMeasure.weight[index] = w;
-        perfMeasures.set(pm.id, perfMeasure);
     }
 
     return {
@@ -54,7 +53,6 @@ export function createWorkoutData() {
         setWorkout,
         setExercise,
         setPerfMeasure,
-        setWeight,
         addToPerfMeasure,
         removeFromPerfMeasure
     };

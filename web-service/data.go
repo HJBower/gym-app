@@ -78,14 +78,14 @@ var perfMeasure1 = WeightPerf{
 
 var perfMeasure2 = WeightPerf{
 	ID:         "b",
-	ExerciseID: "aa-aa",
+	ExerciseID: "bb-bb",
 	Reps:       []uint16{12, 12, 12},
 	Weight:     []float32{30, 30, 30},
 }
 
 var perfMeasure3 = WeightPerf{
 	ID:         "c",
-	ExerciseID: "bb-bb",
+	ExerciseID: "cc-cc",
 	Reps:       []uint16{12, 12, 12},
 	Weight:     []float32{30, 30, 30},
 }

@@ -11,20 +11,22 @@
     const workoutData = getContext<WorkoutData>(DATA);
     let { workoutId } = $props();
     let workout = $derived.by(() => {
-        
         const workout = workoutData.workouts.get(workoutId);
         if (!workout) return null;
-
-        const exercise = [...workoutData.exercises.values()]
-            .filter(e => e.workoutId == workoutId)
-            .sort((a, b) => b.index - a.index);
-
-        return {...workout, exercise};
+        return workout;
     });
+
+    let exercises = $derived.by(() => {
+        return [...workoutData.exercises.values()]
+            .filter(e => e.workoutId == workoutId)
+            .sort((a, b) => a.index - b.index);
+    })
 
     let name = $state("");
     function updateName() {
         if (!workout) return;
+        workoutData.setWorkout({...workout, name: name});
+
         batchUpdate.updateWorkoutName(name, workoutId);
     }
     $effect(() => {
@@ -61,8 +63,28 @@
             index: workoutData.workouts.size + 1,
         }
 
+        let perfMeasure: WeightPerfT = {
+            id: crypto.randomUUID(),
+            exerciseId: exercise.id,
+            reps: [0],
+            weight: [0],
+        }
+
         workoutData.setExercise(exercise);
+        workoutData.setPerfMeasure(perfMeasure);
+
         batchUpdate.addExercise(exercise);
+    }
+
+    function deleteWorkout() {
+        for (const e of exercises) {
+            const perfMeasure = [...workoutData.perfMeasures.values()]
+                .find((pm) => pm.exerciseId == e.id);
+            
+            if (perfMeasure) workoutData.perfMeasures.delete(perfMeasure?.id);
+            workoutData.exercises.delete(e.id);
+        }
+        workoutData.workouts.delete(workoutId);
     }
 
 </script>
@@ -83,22 +105,25 @@
         {#snippet arrowup()}<Up width=1.25rem height=1.25rem/>{/snippet}
         {#snippet arrowdown()}<Down width=1.25rem height=1.25rem/>{/snippet}
         
-            {#if workout}
-                <ul >
-                    {#each workout.exercise as e}
-                        <li>
-                            <Exercise exerciseId={e.id} />
-                        </li>
-                    {/each}
-                </ul>
-            {:else}
-                <p class="flex justify-center p-2">No exercises currently included in workout.</p>
-            {/if}
+        <div class="flex justify-end">
+            <button aria-label="Delete workout" class="delete-workout" onclick={deleteWorkout}></button>
+        </div>
 
-            <div class="flex justify-center">
-                <button aria-label="Add exercise" class="material-symbols--library-add-rounded" onclick={addExercise}></button>
-            </div>
-        
+        {#if workout}
+            <ul >
+                {#each exercises as e}
+                    <li>
+                        <Exercise exerciseId={e.id} />
+                    </li>
+                {/each}
+            </ul>
+        {:else}
+            <p class="flex justify-center p-2">No exercises currently included in workout.</p>
+        {/if}
+
+        <div class="flex justify-center">
+            <button aria-label="Add exercise" class="add-exercise" onclick={addExercise}></button>
+        </div>
     </AccordionItem>
 </Accordion>
 
@@ -129,7 +154,7 @@
         align-items: start;
     }
 
-    .material-symbols--library-add-rounded {
+    .add-exercise{
         display: inline-block;
 
         width: 2rem;
@@ -145,7 +170,7 @@
         mask-size: 100% 100%;
     }
 
-    .material-symbols--library-add-rounded:hover {
+    .add-exercise:hover {
         background-color: var(--button-color-hover);
         animation: pulse 1000ms cubic-bezier(0.9, 0.7, 0.5, 0.9) infinite;
     }
@@ -155,9 +180,29 @@
             opacity: 0.4;
         }
         50% {
-            transform: scale(1.2);
+            transform: scale(1.1);
             opacity: 0.8;
         }
+    }
+
+    .delete-workout {
+        display: inline-block;
+
+        width: 1.5rem;
+        height: 1.5rem;
+
+        --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='m19 19.425l-1.425 1.4q-.275.275-.687.288t-.713-.288q-.275-.275-.275-.7t.275-.7l1.4-1.425l-1.4-1.425q-.275-.275-.288-.687t.288-.713q.275-.275.7-.275t.7.275l1.425 1.4l1.425-1.4q.275-.275.688-.288t.712.288q.275.275.275.7t-.275.7L20.425 18l1.4 1.425q.275.275.288.688t-.288.712q-.275.275-.7.275t-.7-.275zM6 22q-1.25 0-2.125-.875T3 19v-1q0-.825.588-1.412T5 16h1V4q0-.825.588-1.412T8 2h11q.825 0 1.413.588T21 4v8q0 .425-.288.713T20 13t-.712-.288T19 12V4H8v12h5q.425 0 .713.288T14 17t-.288.713T13 18H5v1q0 .425.288.713T6 20h7q.425 0 .713.288T14 21t-.288.713T13 22zm7.875-2H5zM10 9q-.425 0-.712-.288T9 8t.288-.712T10 7h7q.425 0 .713.288T18 8t-.288.713T17 9zm0 3q-.425 0-.712-.288T9 11t.288-.712T10 10h7q.425 0 .713.288T18 11t-.288.713T17 12z'/%3E%3C/svg%3E");
+        background-color: var(--button-color-negative-default);
+        -webkit-mask-image: var(--svg);
+        mask-image: var(--svg);
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-size: 100% 100%;
+        mask-size: 100% 100%;
+    }
+
+    .delete-workout:hover {
+        background-color: var(--button-color-negative-hover);
     }
 
 </style>
